@@ -3,7 +3,7 @@ import pytest
 from fastapi.exceptions import HTTPException
 from fastapi.testclient import TestClient
 
-from phrase_counter.routers.http_data_fetcher import router
+from phrase_api.routers.http_data_fetcher import router
 
 client = TestClient(router)
 

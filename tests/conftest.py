@@ -6,9 +6,7 @@ from pathlib import Path
 from urllib import parse
 
 import pytest
-from pymongo import MongoClient
 
-from phrase_counter.lib.db import mongo_connection
 
 
 @pytest.fixture(scope="session", autouse=True)

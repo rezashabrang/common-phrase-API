@@ -1,12 +1,12 @@
 version: "3.7"
 
 services:
-    phrase-counter:
+    phrase-wrapper:
         build:
             dockerfile: Dockerfile.dev
             context: .
-        image: phrase-counter
-        container_name: phrase_detector
+        image: phrase-wrapper
+        container_name: phrase-wrapper
         environment:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: rootpass

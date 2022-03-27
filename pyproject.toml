@@ -45,6 +45,7 @@ polyglot = "*"
 PyICU = "^2.8.1"
 pycld2 = "^0.41"
 python-arango = "*"
+phrase-counter = "*"
 
 
 [tool.poetry.dev-dependencies]

@@ -83,13 +83,13 @@ app.include_router(
 app.include_router(
     http_status_updater.router,
     prefix=os.getenv("ROOT_PATH", ""),
-    dependencies=[Depends(get_token_header)],
+    # dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 
 app.include_router(
     http_data_fetcher.router,
     prefix=os.getenv("ROOT_PATH", ""),
-    dependencies=[Depends(get_token_header)],
+    # dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )

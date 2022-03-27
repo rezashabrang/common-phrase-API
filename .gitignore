@@ -134,4 +134,4 @@ dmypy.json
 /data
 
 # Exclusion for structuring API
-!/phrase_counter/lib
+!/phrase_api/lib

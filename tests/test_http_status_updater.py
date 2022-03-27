@@ -7,8 +7,8 @@ import pytest
 from fastapi.exceptions import HTTPException
 from fastapi.testclient import TestClient
 
-from phrase_counter.lib.db import integrate_phrase_data
-from phrase_counter.routers.http_status_updater import router
+from phrase_api.lib.db import integrate_phrase_data
+from phrase_api.routers.http_status_updater import router
 
 client = TestClient(router)
 

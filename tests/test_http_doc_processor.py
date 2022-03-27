@@ -3,7 +3,7 @@ from typing import Callable
 
 from fastapi.testclient import TestClient
 
-from phrase_counter.routers.http_doc_processor import router
+from phrase_api.routers.http_doc_processor import router
 
 client = TestClient(router)
 

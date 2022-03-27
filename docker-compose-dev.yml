@@ -1,12 +1,12 @@
 version: "3.7"
 
 services:
-    phrase-counter:
+    phrase-wrapper:
         build:
             dockerfile: Dockerfile.dev
             context: .
-        image: phrase-counter
-        container_name: phrase-counter
+        image: phrase-wrapper
+        container_name: phrase-wrapper
         environment:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}

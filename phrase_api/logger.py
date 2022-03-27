@@ -2,11 +2,11 @@
 import logging
 
 
-def get_logger():
+def get_logger(name):
     """Getting logger."""
     # Configuring Logger
     logging.root.setLevel(logging.NOTSET)
-    logger = logging.getLogger("phrase_logger")
+    logger = logging.getLogger(name)
 
     # Create handler
     s_handler = logging.StreamHandler()

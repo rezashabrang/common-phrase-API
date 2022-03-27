@@ -7,7 +7,7 @@ from hashlib import sha256
 import pytest
 from fastapi.exceptions import HTTPException
 
-from phrase_counter.lib.db import (
+from phrase_api.lib.db import (
     fetch_data,
     integrate_phrase_data,
     mongo_connection,
