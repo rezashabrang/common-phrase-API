@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project scope ignores
+/sandbox
+/test.*
+/data
+
+# Exclusion for structuring API
+!/phrase_counter/lib
