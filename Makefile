@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 PYTHON := python
 
 #* Docker variables
-IMAGE := phrase_counter
+IMAGE := phrase_api
 VERSION := latest
 
 #* Poetry
@@ -29,15 +29,15 @@ pre-commit-install:
 .PHONY: codestyle
 codestyle:
 	poetry run pyupgrade --exit-zero-even-if-changed --py38-plus **/*.py
-	poetry run isort phrase_counter/*.py --settings-path pyproject.toml ./
-	poetry run black phrase_counter/*.py --config pyproject.toml ./
+	poetry run isort phrase_api/*.py --settings-path pyproject.toml ./
+	poetry run black phrase_api/*.py --config pyproject.toml ./
 
 .PHONY: formatting
 formatting: codestyle
 #* Linting
 .PHONY: test
 test:
-	poetry run pytest -c pyproject.toml --cov-report=html --cov=phrase_counter tests/
+	poetry run pytest -c pyproject.toml --cov-report=html --cov=phrase_api tests/
 
 .PHONY: extrabadges
 extrabadges:
@@ -58,14 +58,14 @@ coverage-badge:
 
 .PHONY: check-codestyle
 check-codestyle:
-	poetry run isort --diff --check-only --settings-path pyproject.toml phrase_counter/*.py tests/*.py
-	poetry run black --diff --check --config pyproject.toml phrase_counter/*.py tests/*.py
-	poetry run darglint --verbosity 2 phrase_counter tests
+	poetry run isort --diff --check-only --settings-path pyproject.toml phrase_api/*.py tests/*.py
+	poetry run black --diff --check --config pyproject.toml phrase_api/*.py tests/*.py
+	poetry run darglint --verbosity 2 phrase_api tests
 
 .PHONY: change-codestyle
 change-codestyle:
-	poetry run isort --settings-path pyproject.toml phrase_counter/*.py tests/*.py
-	poetry run black --config pyproject.toml phrase_counter/*.py tests/*.py
+	poetry run isort --settings-path pyproject.toml phrase_api/*.py tests/*.py
+	poetry run black --config pyproject.toml phrase_api/*.py tests/*.py
 
 .PHONY: mypy
 mypy:
@@ -75,7 +75,7 @@ mypy:
 check-safety:
 	poetry check
 	poetry run safety check --full-report
-	poetry run bandit -ll --recursive phrase_counter tests
+	poetry run bandit -ll --recursive phrase_api tests
 
 .PHONY: lint
 lint: test check-codestyle mypy check-safety
@@ -111,15 +111,15 @@ clean-all: pycache-remove build-remove docker-remove
 
 .PHONY: complexity
 complexity:
-	poetry run radon cc phrase_counter --total-average
+	poetry run radon cc phrase_api --total-average
 
 .PHONY: maintainability
 maintainability:
-	poetry run radon mi phrase_counter
+	poetry run radon mi phrase_api
 
 .PHONY: interrogate
 interrogate:
-	poetry run interrogate -v phrase_counter
+	poetry run interrogate -v phrase_api
 
 .PHONY: precommit
 precommit:
@@ -127,5 +127,5 @@ precommit:
 
 .PHONY: cov-badge
 cov-badge:
-	PYTHONPATH=$(PYTHONPATH) poetry run pytest -c pyproject.toml --cov-report=html --cov=phrase_counter tests/
+	PYTHONPATH=$(PYTHONPATH) poetry run pytest -c pyproject.toml --cov-report=html --cov=phrase_api tests/
 	poetry run coverage-badge -o assets/images/coverage.svg -f

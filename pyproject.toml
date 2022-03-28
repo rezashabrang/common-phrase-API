@@ -162,15 +162,15 @@ addopts = [
 testpaths = ['tests']
 
 [tool.coverage.run]
-source = ['phrase_counter', 'tests']
+source = ['phrase_api', 'tests']
 
 [tool.coverage.report]
 fail_under = 80
 show_missing = true
-omit = ["phrase_counter/main.py"]
+omit = ["phrase_api/main.py"]
 
 [coverage.paths]
-source = 'phrase_counter'
+source = 'phrase_api'
 
 [coverage.run]
 branch = true

@@ -61,7 +61,7 @@ def edge_generator(dataframe: DataFrame):
 
 def integrate_phrase_data(
     result: DataFrame,
-    type_data="vertex"
+    data_type="vertex"
 ) -> None:
     """Inserting or updating phrase data in arango collection.
 
@@ -80,10 +80,10 @@ def integrate_phrase_data(
     client = arango_connection()
     phrase_db = client.db(database, username=username, password=password)
 
-    if type_data == "vertex":
+    if data_type == "vertex":
         collection = phrase_db.collection(vertex_col_name)
 
-    elif type_data == "edge":
+    elif data_type == "edge":
         collection = phrase_db.collection(edge_col_name)
 
     # Converting results to JSON records

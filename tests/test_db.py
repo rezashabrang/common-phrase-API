@@ -7,10 +7,12 @@ from hashlib import sha256
 import pytest
 from fastapi.exceptions import HTTPException
 
+import pandas as pd
+
 from phrase_api.lib.db import (
     fetch_data,
     integrate_phrase_data,
-    mongo_connection,
+    arango_connection,
     update_status,
 )
 
@@ -22,16 +24,21 @@ def test_insert_true(clean_collection: Callable[[], None]) -> None:
             "bag": "test_bag",
             "count": 5,
             "status": None,
-            "phrase_hash": "Some random hash",
+            "_key": "15fds67dsa94d6",
         }
     ]
+    sample_res = pd.DataFrame(sample_res)
     integrate_phrase_data(sample_res)
-    test_client = mongo_connection()
-    test_db = test_client[os.getenv("MONGO_PHRASE_DB")]
-    test_col = test_db[os.getenv("MONGO_PHRASE_COL")]
-    mongo_rows = test_col.find({"phrase_hash": "Some random hash"})
+    test_client = arango_connection()
+    test_db = test_client.db(
+        os.getenv("ARANGO_DATABASE"),
+        username=os.getenv("ARANGO_USER"),
+        password=os.getenv("ARANGO_PASS")
+    )
+    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    arango_rows = test_col.find({"_key": "15fds67dsa94d6"})
 
-    assert list(mongo_rows)
+    assert list(arango_rows)
 
 
 def test_update_true(clean_collection: Callable[[], None]) -> None:
@@ -41,16 +48,21 @@ def test_update_true(clean_collection: Callable[[], None]) -> None:
             "bag": "test_bag",
             "count": 5,
             "status": None,
-            "phrase_hash": "Some random hash",
+            "_key": "15fds67dsa94d6",
         }
     ]
+    sample_res = pd.DataFrame(sample_res)
     integrate_phrase_data(sample_res)
     integrate_phrase_data(sample_res)  # Integrating again for update to happen
-    test_client = mongo_connection()
-    test_db = test_client[os.getenv("MONGO_PHRASE_DB")]
-    test_col = test_db[os.getenv("MONGO_PHRASE_COL")]
-    mongo_rows = test_col.find({"phrase_hash": "Some random hash"})
-    assert list(mongo_rows)[0]["count"] == 10
+    test_client = arango_connection()
+    test_db = test_client.db(
+        os.getenv("ARANGO_DATABASE"),
+        username=os.getenv("ARANGO_USER"),
+        password=os.getenv("ARANGO_PASS")
+    )
+    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    arango_rows = test_col.find({"_key": "15fds67dsa94d6"})
+    assert list(arango_rows)[0]["count"] == 10
 
 
 def test_update_status_true(clean_collection: Callable[[], None]) -> None:
@@ -60,16 +72,21 @@ def test_update_status_true(clean_collection: Callable[[], None]) -> None:
             "bag": "test_bag",
             "count": 5,
             "status": None,
-            "phrase_hash": sha256(b"test_bag").hexdigest(),
+            "_key": sha256(b"test_bag").hexdigest(),
         }
     ]
-    integrate_phrase_data(sample_res)
+    sample_res_df = pd.DataFrame(sample_res)
+    integrate_phrase_data(sample_res_df)
     update_status("test_bag", "highlight")
-    test_client = mongo_connection()
-    test_db = test_client[os.getenv("MONGO_PHRASE_DB")]
-    test_col = test_db[os.getenv("MONGO_PHRASE_COL")]
-    mongo_rows = test_col.find({"phrase_hash": sample_res[0]["phrase_hash"]})
-    status = list(mongo_rows)[0]["status"]
+    test_client = arango_connection()
+    test_db = test_client.db(
+        os.getenv("ARANGO_DATABASE"),
+        username=os.getenv("ARANGO_USER"),
+        password=os.getenv("ARANGO_PASS")
+    )
+    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    arango_rows = test_col.find({"_key": sample_res[0]["_key"]})
+    status = list(arango_rows)[0]["status"]
     assert status == "highlight"
 
 
@@ -115,7 +132,7 @@ def test_check_len(clean_collection, mock_data):
 def test_check_statuses(clean_collection, mock_data):
     """Checking statuses."""
     integrate_phrase_data(mock_data)
-    statuses = [None, "highlight", "stop", "with_status", "no_status"]
+    statuses = [None, "highlight", "stop", "has_status", "no_status"]
     for status in statuses:
         res = fetch_data(status=status, limit=10, offset=0)
         assert res
