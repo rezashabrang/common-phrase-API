@@ -4,11 +4,11 @@ import random
 import string
 from pathlib import Path
 
-from phrase_api.lib.db import arango_connection
-
-import pytest
-
 import pandas as pd
+import pytest
+from phrase_counter.ingest import ingest_doc
+
+from phrase_api.lib.db import arango_connection
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -30,15 +30,13 @@ def initializing_db():
     node_collection = os.getenv("ARANGO_VERTEX_COLLECTION")
     edge_collection = os.getenv("ARANGO_EDGE_COLLECTION")
     test_client = arango_connection()
-    sys_db = test_client.db('_system', username=username, password=password)
+    sys_db = test_client.db("_system", username=username, password=password)
 
     # Creating test database
     if not sys_db.has_database(database):
         sys_db.create_database(
             database,
-            users=[
-                {'username': 'root', 'password': 'rootpass', 'active': True}
-            ]
+            users=[{"username": "root", "password": "rootpass", "active": True}],
         )
 
     test_db = test_client.db(database, username=username, password=password)
@@ -70,7 +68,7 @@ def clean_collection():
     test_db = test_client.db(
         os.getenv("ARANGO_DATABASE"),
         username=os.getenv("ARANGO_USER"),
-        password=os.getenv("ARANGO_PASS")
+        password=os.getenv("ARANGO_PASS"),
     )
 
     test_node_collection = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
@@ -101,9 +99,17 @@ def sample_text():
 
 
 @pytest.fixture(scope="function")
+def processed_text(sample_text):
+    """Processing sample text"""
+    processed_text = ingest_doc(sample_text, doc_type="TEXT")
+
+    return processed_text
+
+
+@pytest.fixture(scope="function")
 def mock_data():
     """Creating mock data."""
-    n_data = random.randint(10, 30)  # Number of random data to be created.
+    n_data = random.randint(200, 300)  # Number of random data to be created.
     status_list = [None, "stop", "highlight"]
     data = []
     for _ in range(n_data):

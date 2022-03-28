@@ -51,7 +51,7 @@ async def process_document(
         # --------------------------- INTEGRATION ---------------------------
         logger.info("integrating nodes")
         # Insert nodes
-        integrate_phrase_data(phrase_count_res, type_data="vertex")
+        integrate_phrase_data(phrase_count_res, data_type="vertex")
         logger.info("integrating edges")
         # Insert edges
         counter = 1
@@ -61,7 +61,7 @@ async def process_document(
             logger.info(
                 f"Integrating edge batch {counter} / {len(phrase_count_res) - 1}")
 
-            integrate_phrase_data(edge_batch, type_data="edge")
+            integrate_phrase_data(edge_batch, data_type="edge")
 
             e = time()
             logger.info(f"Total time taken for edge batch: {e - s} s")

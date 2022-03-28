@@ -3,14 +3,13 @@ from typing import Callable
 
 from hashlib import sha256
 
+import pandas as pd
 import pytest
 from fastapi.exceptions import HTTPException
 from fastapi.testclient import TestClient
 
 from phrase_api.lib.db import integrate_phrase_data
 from phrase_api.routers.http_status_updater import router
-
-import pandas as pd
 
 client = TestClient(router)
 

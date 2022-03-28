@@ -1,4 +1,4 @@
-"""Mongo Database Configs."""
+"""Arango Database Configs."""
 from typing import Dict, List, Union
 
 import os
@@ -25,13 +25,16 @@ def arango_connection() -> ArangoClient:
     return arango_client
 
 
-def edge_generator(dataframe: DataFrame):
+def edge_generator(dataframe: DataFrame) -> DataFrame:
     """Generator function for creating edges.
 
         Args:
             dataframe: Ngrams dataframe
+
+        Yields:
+            Edge dataframe
     """
-    vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
+    vertex_col_name = str(os.getenv("ARANGO_VERTEX_COLLECTION"))
     for i in range(len(dataframe) - 1):
         comb = []  # Combinations list
         static_node = dataframe.iloc[i]["_key"]
@@ -61,13 +64,13 @@ def edge_generator(dataframe: DataFrame):
 
 def integrate_phrase_data(
     result: DataFrame,
-    data_type="vertex"
+    data_type: str = "vertex"
 ) -> None:
     """Inserting or updating phrase data in arango collection.
 
     Args:
-        phrase_res: JSON result of counted phrases.
-        edge_res: JSON result of edges.
+        result: JSON result of counted phrases or generated edges.
+        data_type: Either vertex or edge.
     """
     s = time()
 

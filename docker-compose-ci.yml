@@ -8,34 +8,34 @@ services:
         image: phrase-wrapper
         container_name: phrase-wrapper
         environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: rootpass
-            MONGO_USERNAME: root
-            MONGO_PASSWORD: rootpass
-            MONGO_PHRASE_DB: phrase_db
-            MONGO_PHRASE_COL: common_phrase
-            MONGO_HOST: db
-            MONGO_PORT: 27017
-            API_KEY: 27def524e3f
+            ARANGO_ROOT_PASSWORD: rootpass
+            ARANGO_DATABASE: test_phrase
+            ARANGO_VERTEX_COLLECTION: test_phrase
+            ARANGO_EDGE_COLLECTION: test_phrase_relation
+            ARANGO_USER: root
+            ARANGO_PASS: rootpass
+            ARANGO_HOST: phrase-db
+            ARANGO_PORT: 8529
+            API_KEY: 27def526b7b
         volumes:
             - .:/app/
             - /app/.venv
         ports:
             - "8000:80"
     phrase-db:
-        image: mongo
+        image: arangodb
         container_name: phrase-db
         restart: always
         environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: rootpass
-            MONGO_USERNAME: root
-            MONGO_PASSWORD: rootpass
-            MONGO_PHRASE_DB: phrase_db
-            MONGO_PHRASE_COL: common_phrase
-            MONGO_HOST: db
-            MONGO_PORT: 27017
+            ARANGO_ROOT_PASSWORD: rootpass
+            ARANGO_DATABASE: test_phrase
+            ARANGO_VERTEX_COLLECTION: test_phrase
+            ARANGO_EDGE_COLLECTION: test_phrase_relation
+            ARANGO_USER: root
+            ARANGO_PASS: rootpass
+            ARANGO_HOST: phrase-db
+            ARANGO_PORT: 8529
         ports:
-            - 27017:27017
+            - 8529:8529
         volumes:
-            - ./data/mongo:/data/db
+            - ./data/arango:/var/lib/arangodb3

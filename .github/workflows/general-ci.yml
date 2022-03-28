@@ -1,14 +1,14 @@
+
 name: Standard CI
 
-on:
-  push:
+on: [push]
 
 jobs:
-  general-checks:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8"]
 
     steps:
     - uses: actions/checkout@v2
@@ -17,31 +17,33 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
+    - name: Build & run services
       run: |
-        make install
-
+        docker-compose -f docker-compose-ci.yml up -d --build
+        sleep 20
     - name: Run style checks
       run: |
-        make check-codestyle
-
+        docker exec -i phrase-wrapper make check-codestyle
+    - name: Run tests
+      run: |
+        docker exec -i phrase-wrapper make test
+    - name: Run coverage
+      run: |
+        docker exec -i phrase-wrapper make coverage
     - name: Run safety checks
       run: |
-        make check-safety
+        docker exec -i phrase-wrapper make check-safety
       continue-on-error: true
 
     - name: Run mypy checks
       run: |
-        make mypy
-
+        docker exec -i phrase-wrapper make mypy
     - name: Run complexity
       run: |
-        make complexity
-
+        docker exec -i phrase-wrapper make complexity
     - name: Run maintainability
       run: |
-        make maintainability
-
+        docker exec -i phrase-wrapper make maintainability
     - name: Run interrogate
       run: |
-        make interrogate
+        docker exec -i phrase-wrapper make interrogate

@@ -4,15 +4,15 @@ from typing import Callable
 import os
 from hashlib import sha256
 
+import pandas as pd
 import pytest
 from fastapi.exceptions import HTTPException
 
-import pandas as pd
-
 from phrase_api.lib.db import (
+    arango_connection,
+    edge_generator,
     fetch_data,
     integrate_phrase_data,
-    arango_connection,
     update_status,
 )
 
@@ -33,7 +33,7 @@ def test_insert_true(clean_collection: Callable[[], None]) -> None:
     test_db = test_client.db(
         os.getenv("ARANGO_DATABASE"),
         username=os.getenv("ARANGO_USER"),
-        password=os.getenv("ARANGO_PASS")
+        password=os.getenv("ARANGO_PASS"),
     )
     test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
     arango_rows = test_col.find({"_key": "15fds67dsa94d6"})
@@ -58,7 +58,7 @@ def test_update_true(clean_collection: Callable[[], None]) -> None:
     test_db = test_client.db(
         os.getenv("ARANGO_DATABASE"),
         username=os.getenv("ARANGO_USER"),
-        password=os.getenv("ARANGO_PASS")
+        password=os.getenv("ARANGO_PASS"),
     )
     test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
     arango_rows = test_col.find({"_key": "15fds67dsa94d6"})
@@ -82,7 +82,7 @@ def test_update_status_true(clean_collection: Callable[[], None]) -> None:
     test_db = test_client.db(
         os.getenv("ARANGO_DATABASE"),
         username=os.getenv("ARANGO_USER"),
-        password=os.getenv("ARANGO_PASS")
+        password=os.getenv("ARANGO_PASS"),
     )
     test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
     arango_rows = test_col.find({"_key": sample_res[0]["_key"]})
@@ -136,6 +136,24 @@ def test_check_statuses(clean_collection, mock_data):
     for status in statuses:
         res = fetch_data(status=status, limit=10, offset=0)
         assert res
-        assert len(res) == 10
+        assert len(res) <= 10
         for i in range(len(res) - 1):
             assert res[i]["count"] >= res[i + 1]["count"]
+
+
+def test_edge_count(clean_collection, processed_text):
+    """Testing that edge count is being updated."""
+    for _ in range(2):
+        integrate_phrase_data(processed_text, data_type="vertex")
+        for edge_batch in edge_generator(processed_text):
+            integrate_phrase_data(edge_batch, data_type="edge")
+
+    test_client = arango_connection()
+    test_db = test_client.db(
+        os.getenv("ARANGO_DATABASE"),
+        username=os.getenv("ARANGO_USER"),
+        password=os.getenv("ARANGO_PASS"),
+    )
+    test_edge_col = test_db.collection(os.getenv("ARANGO_EDGE_COLLECTION"))
+    arango_rows = test_edge_col.find({}, limit=1)
+    assert list(arango_rows)[0]["count"] == 2
