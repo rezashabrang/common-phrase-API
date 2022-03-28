@@ -60,7 +60,12 @@ async def process_document(
         s = time()
         # --------------------------- INGEST ---------------------------
         logger.info("counting phrases")
-        phrase_count_res = ingest_doc(doc=doc.document, doc_type=doc_type)
+        phrase_count_res = ingest_doc(
+            doc=doc.document,
+            doc_type=doc_type,
+            replace_stop=replace_stop,
+            tag_stop=tag_stop
+        )
 
         # --------------------------- INTEGRATION ---------------------------
         logger.info("integrating nodes")
