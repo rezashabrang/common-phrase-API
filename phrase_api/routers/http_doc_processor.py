@@ -30,11 +30,25 @@ class PhraseDocument(BaseModel):
     status_code=201,
 )
 async def process_document(
-    doc: PhraseDocument, doc_type: str = Query("TEXT", enum=["TEXT", "HTML", "URL"])
+    doc: PhraseDocument,
+    doc_type: str = Query("TEXT", enum=["TEXT", "HTML", "URL"]),
+    replace_stop: bool = False,
+    tag_stop: bool = False
 ) -> Dict[str, str]:
-    """Getting document content, processing & saving results in db.
+    """**Getting document content, processing & saving results in db.**
 
-    **Example**: <br>
+    **Arguments:**
+
+    * **doc_type**: Type of the document given. Either `TEXT`, `HTML` or `URL`.
+
+    * **replace_stop**: Whether to replace stop words and remove them in process.
+
+    * **tag_stop**: Whether to set status for stop phrases as `suggested-stop`.
+    Note that if **replace_stop** is set to *True* setting this argument to *True*
+    is meaningless.
+
+
+    **Payload Example**: <br>
     ```
     {
         "document" :"<p> hello world </p>

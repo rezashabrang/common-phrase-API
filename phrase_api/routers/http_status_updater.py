@@ -17,7 +17,7 @@ router = APIRouter()
     status_code=201,
 )
 async def read_phrase_status(phrase: str, status_code: int) -> Dict[str, str]:
-    """Getting phrase & status and updating related record in db.
+    """**Getting phrase & status and updating related record in db.**
 
     **Arguments:** <br>
     * **phrase**: Phrase for which the status must be changed.

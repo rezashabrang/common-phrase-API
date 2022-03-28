@@ -18,7 +18,7 @@ async def fetch_phrases(
     limit: int = 10,
     page: int = 1
 ):
-    """Fetching data from database.
+    """**Fetching data from database.**
 
     **Arguments:** <br>
 
