@@ -1,8 +1,8 @@
 """Document processor Endpoint."""
-from typing import Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from lib.db import integrate_phrase_data,  edge_generator
+from lib.db import insert_phrase_data
 from phrase_counter.ingest import ingest_doc
 from pydantic import BaseModel
 
@@ -33,7 +33,9 @@ async def process_document(
     doc: PhraseDocument,
     doc_type: str = Query("TEXT", enum=["TEXT", "HTML", "URL"]),
     replace_stop: bool = False,
-    tag_stop: bool = False
+    tag_stop: bool = False,
+    sitename: Optional[str] = None,
+    doc_id: Optional[str] = None
 ) -> Dict[str, str]:
     """**Getting document content, processing & saving results in db.**
 
@@ -47,6 +49,9 @@ async def process_document(
     Note that if **replace_stop** is set to *True* setting this argument to *True*
     is meaningless.
 
+    * **sitename**: Name of the site while using AASAAM services.
+
+    * **doc_id**: Optional document identifier.
 
     **Payload Example**: <br>
     ```
@@ -67,31 +72,21 @@ async def process_document(
             tag_stop=tag_stop
         )
 
-        # --------------------------- INTEGRATION ---------------------------
-        logger.info("integrating nodes")
-        # Insert nodes
-        integrate_phrase_data(phrase_count_res, data_type="vertex")
-        logger.info("integrating edges")
-        # Insert edges
-        counter = 1
-        for edge_batch in edge_generator(phrase_count_res):
-            s = time()
+        # Additional MetaData
+        phrase_count_res["sitename"] = sitename
+        phrase_count_res["doc_id"] = doc_id
+        phrase_count_res = phrase_count_res.rename(columns={"_key": "phrase_hash"})
 
-            logger.info(
-                f"Integrating edge batch {counter} / {len(phrase_count_res) - 1}")
+        # --------------------------- INSERTION ---------------------------
+        logger.info("inserting nodes")
+        insert_phrase_data(phrase_count_res)
 
-            integrate_phrase_data(edge_batch, data_type="edge")
-
-            e = time()
-            logger.info(f"Total time taken for edge batch: {e - s} s")
-            logger.info(f"Number of integrated records: {len(edge_batch)}")
-            counter += 1
-
-        res = {"message": "Results integration done."}
         e = time()
 
-        logger.info("Results integration done!")
-        logger.info(f"total time: {e -s}")
+        res = {"message": "Results integration done."}
+
+        logger.info("Results insertion done!")
+        logger.info("Total time: %.3f s", e - s)
         return res
 
     except HTTPException as err:

@@ -46,6 +46,7 @@ PyICU = "^2.8.1"
 pycld2 = "^0.41"
 python-arango = "*"
 phrase-counter = "^0.1.1"
+sqlalchemy = "*"
 
 
 [tool.poetry.dev-dependencies]

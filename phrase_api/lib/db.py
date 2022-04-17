@@ -57,8 +57,6 @@ def edge_generator(dataframe: DataFrame) -> DataFrame:
 
         e = time()
 
-        logger.info(f"Time taken for edge batch process: {(e - s) * 1000} ms")
-
         yield edge_df
 
 
@@ -109,7 +107,27 @@ def integrate_phrase_data(
     client.close()
 
     e = time()
-    logger.info(f"Time taken for edge batch integration: {(e - s) * 1000} ms")
+
+
+def insert_phrase_data(
+    result: DataFrame,
+) -> None:
+    # ------------------ Initialization & Connecting to database ------------------
+    vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
+    username = os.getenv("ARANGO_USER")
+    password = os.getenv("ARANGO_PASS")
+    database = os.getenv("ARANGO_DATABASE")
+    client = arango_connection()
+    phrase_db = client.db(database, username=username, password=password)
+
+    collection = phrase_db.collection(vertex_col_name)
+
+    # Converting results to JSON records
+    result = result.to_dict(orient="records")
+
+    collection.import_bulk(result)
+
+    client.close()
 
 
 def update_status(phrase: str, status: str) -> None:

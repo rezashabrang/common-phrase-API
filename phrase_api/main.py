@@ -76,7 +76,7 @@ app.openapi = custom_openapi  # type: ignore
 app.include_router(
     http_doc_processor.router,
     prefix=os.getenv("ROOT_PATH", ""),
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 
