@@ -1,17 +1,26 @@
 """Helper functions for CLI."""
 from cmath import log
 import sqlite3
-from unittest import result
 from phrase_api.logger import get_logger
 from sqlalchemy import create_engine, select, Column, Integer, Text, BLOB
 import requests
 import os
 from sqlalchemy.orm import declarative_base
+import multiprocessing as mp
 
 
 Base = declarative_base()
 
 logger = get_logger(__name__)
+
+
+class News(Base):
+    """News metadata"""
+    __tablename__ = "newsstudio_contents"
+    id = Column(Integer)
+    newsstudio_id = Column(Integer, primary_key=True)
+    content = Column(Text)
+    newsstudio_content_data = Column(BLOB)
 
 
 def initialize_sqlite() -> None:
@@ -44,7 +53,7 @@ def update_tracker(
 
     select_query = "SELECT * FROM tracker where host = :host AND sitename = :sitename"
 
-    result = cur.execute(select_query, {"host": host, "sitename": sitename})
+    result = cur.execute(select_query, {"host": host, "sitename": sitename}).fetchone()
 
     check_res = None if not result else list(result)
 
@@ -58,12 +67,13 @@ def update_tracker(
 
     # If there is already a record then update the article_id
     else:
-        update_q = "UPDATE tracker SET article_id = :article_id WHERE\
-            host = :host AND sitename = :sitename"
+        if article_id > check_res[0]:
+            update_q = "UPDATE tracker SET article_id = :article_id WHERE\
+                host = :host AND sitename = :sitename"
 
-        cur.execute(
-            update_q, {"sitename": sitename, "host": host, "article_id": article_id}
-        )
+            cur.execute(
+                update_q, {"sitename": sitename, "host": host, "article_id": article_id}
+            )
 
     conn.commit()
     conn.close()
@@ -128,59 +138,77 @@ def ingest_site(cli_args):
 
     logger.info("Starting fetching news.")
 
-    for news_id in range(last_news_id, max_id + 1):
-        # Fetching article text
-        query = select(News.content).where(News.newsstudio_id == news_id)
-        news_content = conn.execute(query).fetchone()
+    # for news_id in range(last_news_id, max_id + 1):
+    num_threads = mp.cpu_count()
 
-        # If there is no result continue
-        if news_content is None:
-            logger.info("No news for id %d", news_id)
-            continue
+    pool = mp.Pool(num_threads)
+    pool.starmap(
+        ingest_news,
+        zip((news_id for news_id in range(last_news_id, max_id + 1)),
+            (cli_args for _ in range(last_news_id, max_id + 1)),
+            (max_id for _ in range(last_news_id, max_id + 1))
+            ))
 
-        news_content = news_content[0]
-        # --------------- Creating request to doc-process endpoint ---------------
-        payload = {
-            "document": news_content
-        }
-        headers = {
-            "x-token": os.getenv("API_KEY")
-        }
-        # TODO maybe setting rootpath in env file?
-        request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
+
+def ingest_news(
+    news_id, cli_args, max_id
+):
+    """Ingesting each news"""
+    db_engine = create_engine(
+        "mysql://{username}:{password}@{host}:{port}/{db}?charset={ch}".format(
+            username=cli_args["username"],
+            password=cli_args["password"],
+            host=cli_args["host"],
+            port=cli_args["port"],
+            db=cli_args["db"],
+            ch="utf8",
+        )
+    )
+    conn = db_engine.connect()
+    # Fetching article text
+    query = select(News.content).where(News.newsstudio_id == news_id)
+    news_content = conn.execute(query).fetchone()
+
+    # If there is no result continue
+    if news_content is None:
+        logger.info("No news for id %d", news_id)
+        return
+
+    news_content = news_content[0]
+    conn.close()
+    # --------------- Creating request to doc-process endpoint ---------------
+    payload = {
+        "document": news_content
+    }
+    headers = {
+        "x-token": os.getenv("API_KEY")
+    }
+    # TODO maybe setting rootpath in env file?
+    request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
 replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
 &doc_id={news_id}&sitename={cli_args['sitename']}"
 
-        req = requests.post(
-            request_url,
-            json=payload,
-            headers=headers
+    req = requests.post(
+        request_url,
+        json=payload,
+        headers=headers
+    )
+
+    if req.status_code == 201:
+        update_tracker(
+            sitename=cli_args["sitename"],
+            host=cli_args["host"],
+            article_id=news_id
         )
-
-        if req.status_code == 201:
-            update_tracker(
-                sitename=cli_args["sitename"],
-                host=cli_args["host"],
-                article_id=news_id
-            )
-        else:
-            logger.error(
-                "Failed ingesting %s - news_id: %d", cli_args['sitename'], news_id
-            )
-            continue
-
-        logger.info(
-            "Finished processing news %d / %d of site %s.",
-            news_id,
-            max_id,
-            cli_args['sitename']
+    else:
+        logger.error(
+            "Failed ingesting %s - news_id: %d", cli_args['sitename'], news_id
         )
+        return
 
-
-class News(Base):
-    """News metadata"""
-    __tablename__ = "newsstudio_contents"
-    id = Column(Integer)
-    newsstudio_id = Column(Integer, primary_key=True)
-    content = Column(Text)
-    newsstudio_content_data = Column(BLOB)
+    logger.info(
+        "Finished processing news %d / %d of site %s.",
+        news_id,
+        max_id,
+        cli_args['sitename']
+    )
