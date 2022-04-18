@@ -47,6 +47,7 @@ pycld2 = "^0.41"
 python-arango = "*"
 phrase-counter = "^0.1.1"
 sqlalchemy = "*"
+mysqlclient = "^2.1.0"
 
 
 [tool.poetry.dev-dependencies]

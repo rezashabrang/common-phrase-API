@@ -14,6 +14,7 @@ from phrase_api.lib.db import (
     fetch_data,
     integrate_phrase_data,
     update_status,
+    insert_phrase_data
 )
 
 
@@ -157,3 +158,17 @@ def test_edge_count(clean_collection, processed_text):
     test_edge_col = test_db.collection(os.getenv("ARANGO_EDGE_COLLECTION"))
     arango_rows = test_edge_col.find({}, limit=1)
     assert list(arango_rows)[0]["count"] == 2
+
+
+def test_simple_insert_arango(clean_collection, processed_text):
+    """Simple test for arango insertion function"""
+    insert_phrase_data(processed_text)
+    test_client = arango_connection()
+    test_db = test_client.db(
+        os.getenv("ARANGO_DATABASE"),
+        username=os.getenv("ARANGO_USER"),
+        password=os.getenv("ARANGO_PASS"),
+    )
+    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    arango_rows = test_col.find({}, limit=1)
+    assert list(arango_rows)

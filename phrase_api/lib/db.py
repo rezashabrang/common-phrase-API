@@ -112,6 +112,7 @@ def integrate_phrase_data(
 def insert_phrase_data(
     result: DataFrame,
 ) -> None:
+    """Inserting data into arango. (No integration)"""
     # ------------------ Initialization & Connecting to database ------------------
     vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
     username = os.getenv("ARANGO_USER")

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Module for updating thesaurus."""
 import argparse
 from phrase_api.lib.cli_helper import initialize_sqlite, ingest_site
