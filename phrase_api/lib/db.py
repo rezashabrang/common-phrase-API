@@ -2,13 +2,14 @@
 from typing import Dict, List, Union
 
 import os
-
-from fastapi.exceptions import HTTPException
-from arango import ArangoClient
-import pandas as pd
-from pandas import DataFrame
-from time import time
 from hashlib import sha256
+from time import time
+
+import pandas as pd
+from arango import ArangoClient
+from fastapi.exceptions import HTTPException
+from pandas import DataFrame
+
 from phrase_api.logger import get_logger
 
 logger = get_logger(__name__)
@@ -18,9 +19,7 @@ def arango_connection() -> ArangoClient:
     """Connecting to arango."""
     host = os.getenv("ARANGO_HOST")
     port = os.getenv("ARANGO_PORT")
-    arango_client = ArangoClient(
-        hosts=f"http://{host}:{port}"
-    )
+    arango_client = ArangoClient(hosts=f"http://{host}:{port}")
 
     return arango_client
 
@@ -28,11 +27,11 @@ def arango_connection() -> ArangoClient:
 def edge_generator(dataframe: DataFrame) -> DataFrame:
     """Generator function for creating edges.
 
-        Args:
-            dataframe: Ngrams dataframe
+    Args:
+        dataframe: Ngrams dataframe
 
-        Yields:
-            Edge dataframe
+    Yields:
+        Edge dataframe
     """
     vertex_col_name = str(os.getenv("ARANGO_VERTEX_COLLECTION"))
     for i in range(len(dataframe) - 1):
@@ -56,10 +55,7 @@ def edge_generator(dataframe: DataFrame) -> DataFrame:
         yield edge_df
 
 
-def integrate_phrase_data(
-    result: DataFrame,
-    data_type: str = "vertex"
-) -> None:
+def integrate_phrase_data(result: DataFrame, data_type: str = "vertex") -> None:
     """Inserting or updating phrase data in arango collection.
 
     Args:
@@ -214,11 +210,6 @@ def fetch_data(
         bind_vars["status"] = status
 
     # Gettting results
-    result = list(
-        phrase_db.aql.execute(
-            query=query,
-            bind_vars=bind_vars
-        )
-    )
+    result = list(phrase_db.aql.execute(query=query, bind_vars=bind_vars))
 
     return result

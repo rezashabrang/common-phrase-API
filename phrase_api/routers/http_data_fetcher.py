@@ -16,7 +16,7 @@ async def fetch_phrases(
         None, enum=["highlight", "stop", "has_status", "no_status", "suggested-stop"]
     ),
     limit: int = 10,
-    page: int = 1
+    page: int = 1,
 ):
     """**Fetching data from database.**
 
@@ -43,7 +43,12 @@ async def fetch_phrases(
     """
     try:
         if status not in [
-            None, "highlight", "stop", "has_status", "no_status", "suggested-stop"
+            None,
+            "highlight",
+            "stop",
+            "has_status",
+            "no_status",
+            "suggested-stop",
         ]:
             raise HTTPException(status_code=400, detail="bad-status")
         offset = (page - 1) * limit

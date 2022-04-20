@@ -58,14 +58,14 @@ coverage-badge:
 
 .PHONY: check-codestyle
 check-codestyle:
-	poetry run isort --diff --check-only --settings-path pyproject.toml phrase_api/*.py tests/*.py
-	poetry run black --diff --check --config pyproject.toml phrase_api/*.py tests/*.py
+	poetry run isort --diff --check-only --settings-path pyproject.toml phrase_api/*.py phrase_api/*/*.py tests/*.py
+	poetry run black --diff --check --config pyproject.toml phrase_api/*.py phrase_api/*/*.py tests/*.py
 	poetry run darglint --verbosity 2 phrase_api tests
 
 .PHONY: change-codestyle
 change-codestyle:
-	poetry run isort --settings-path pyproject.toml phrase_api/*.py tests/*.py
-	poetry run black --config pyproject.toml phrase_api/*.py tests/*.py
+	poetry run isort --settings-path pyproject.toml phrase_api/*.py phrase_api/*/*.py tests/*.py
+	poetry run black --config pyproject.toml phrase_api/*.py phrase_api/*/*.py tests/*.py
 
 .PHONY: mypy
 mypy:

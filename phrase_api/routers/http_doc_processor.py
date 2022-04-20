@@ -1,14 +1,14 @@
 """Document processor Endpoint."""
 from typing import Dict, Optional
 
+from time import time
+
 from fastapi import APIRouter, HTTPException, Query
 from lib.db import insert_phrase_data
 from phrase_counter.ingest import ingest_doc
 from pydantic import BaseModel
 
 from phrase_api.logger import get_logger
-
-from time import time
 
 # ------------------------------ Initialization -------------------------------
 router = APIRouter()
@@ -35,7 +35,7 @@ async def process_document(
     replace_stop: bool = False,
     tag_stop: bool = False,
     sitename: Optional[str] = None,
-    doc_id: Optional[str] = None
+    doc_id: Optional[str] = None,
 ) -> Dict[str, str]:
     """**Getting document content, processing & saving results in db.**
 
@@ -73,12 +73,12 @@ async def process_document(
             doc=doc.document,
             doc_type=doc_type,
             replace_stop=replace_stop,
-            tag_stop=tag_stop
+            tag_stop=tag_stop,
         )
 
         e = time()
 
-        logger.info("Time taken for processing content: %f s", e-s)
+        logger.info("Time taken for processing content: %f s", e - s)
 
         # Additional MetaData
         phrase_count_res["sitename"] = sitename
@@ -93,7 +93,7 @@ async def process_document(
 
         e = time()
 
-        logger.info("Time taken for inserting processed news: %f s", e-s)
+        logger.info("Time taken for inserting processed news: %f s", e - s)
 
         res = {"message": "Results integration done."}
 

@@ -1,11 +1,15 @@
 """Helper functions for CLI."""
-import sqlite3
-from phrase_api.logger import get_logger
-from sqlalchemy import create_engine, select, Column, Integer, Text, BLOB
-import requests
-import os
-from sqlalchemy.orm import declarative_base
 import multiprocessing as mp
+import os
+import sqlite3
+
+import requests
+from sqlalchemy import BLOB, Column, Integer, Text, create_engine, select
+from sqlalchemy.exc import OperationalError, TimeoutError
+from sqlalchemy.orm import declarative_base
+
+from phrase_api.logger import get_logger
+
 # from time import time
 
 
@@ -16,90 +20,12 @@ logger = get_logger(__name__)
 
 class News(Base):
     """News metadata"""
+
     __tablename__ = "newsstudio_contents"
     id = Column(Integer)
     newsstudio_id = Column(Integer, primary_key=True)
     content = Column(Text)
     newsstudio_content_data = Column(BLOB)
-
-
-def initialize_sqlite() -> None:
-    """Creating database and related table."""
-    conn = sqlite3.connect('tracker.db')
-
-    logger.info("Created sqlite database.")
-
-    conn.execute('''CREATE TABLE tracker
-         (ID INTEGER PRIMARY KEY AUTOINCREMENT     NOT NULL,
-         sitename           CHAR(100)    NOT NULL,
-         host            CHAR(100)     NOT NULL,
-         article_id         INT);
-         ''')
-
-    logger.info("Created tracker table.")
-
-    conn.close()
-
-
-def update_tracker(
-    sitename: str,
-    host: str,
-    article_id: int
-) -> None:
-    """Updating tracker for current database."""
-    conn = sqlite3.connect('tracker.db')
-
-    cur = conn.cursor()
-
-    select_query = "SELECT * FROM tracker where host = :host AND sitename = :sitename"
-
-    result = cur.execute(select_query, {"host": host, "sitename": sitename}).fetchone()
-
-    check_res = None if not result else list(result)
-
-    # If there is not any record beforehand then insert new one.
-    if not check_res:
-        insert_q = "INSERT INTO tracker (sitename,host,article_id) \
-            VALUES (:sitename, :host, :article_id )"
-        cur.execute(
-            insert_q, {"sitename": sitename, "host": host, "article_id": article_id}
-        )
-
-    # If there is already a record then update the article_id
-    else:
-        if article_id > check_res[0]:
-            update_q = "UPDATE tracker SET article_id = :article_id WHERE\
-                host = :host AND sitename = :sitename"
-
-            cur.execute(
-                update_q, {"sitename": sitename, "host": host, "article_id": article_id}
-            )
-
-    conn.commit()
-    conn.close()
-    return
-
-
-def check_tracker(
-    sitename: str,
-    host: str,
-) -> int:
-    """Getting last news id from tracker."""
-    conn = sqlite3.connect('tracker.db')
-
-    cur = conn.cursor()
-    select_query = "SELECT article_id FROM tracker where host = :host AND sitename = \
-:sitename"
-
-    result = cur.execute(select_query, {"sitename": sitename, "host": host}).fetchone()
-
-    last_news_id = None if not result else list(result)
-    conn.close()
-
-    # If there is not any record return 0
-    if not last_news_id:
-        return 0
-    return int(last_news_id[0])
 
 
 def ingest_site(cli_args):
@@ -149,15 +75,15 @@ def ingest_site(cli_args):
     pool = mp.Pool(num_threads)
     pool.starmap(
         ingest_news,
-        zip((news_ids for news_ids in news_groups),
+        zip(
+            (news_ids for news_ids in news_groups),
             (cli_args for _ in range(len(news_groups))),
-            (max_id for _ in range(len(news_groups)))
-            ))
+            (max_id for _ in range(len(news_groups))),
+        ),
+    )
 
 
-def ingest_news(
-    news_ids, cli_args, max_id
-):
+def ingest_news(news_ids, cli_args, max_id):
     """Ingesting each news"""
     db_engine = create_engine(
         "mysql://{username}:{password}@{host}:{port}/{db}?charset={ch}".format(
@@ -189,40 +115,105 @@ def ingest_news(
         news = content[0]
         news_id = content[1]
         # --------------- Creating request to doc-process endpoint ---------------
-        payload = {
-            "document": news
-        }
-        headers = {
-            "x-token": os.getenv("API_KEY")
-        }
+        payload = {"document": news}
+        headers = {"x-token": os.getenv("API_KEY")}
         # TODO maybe setting rootpath in env file?
         request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
 replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
 &doc_id={news_id}&sitename={cli_args['sitename']}"
 
-        req = requests.post(
-            request_url,
-            json=payload,
-            headers=headers
-        )
+        req = requests.post(request_url, json=payload, headers=headers)
 
         if req.status_code == 201:
             update_tracker(
-                sitename=cli_args["sitename"],
-                host=cli_args["host"],
-                article_id=news_id
+                sitename=cli_args["sitename"], host=cli_args["host"], article_id=news_id
             )
         else:
             logger.error(
-                "Failed ingesting %s - news_id: %d", cli_args['sitename'],
+                "Failed ingesting %s - news_id: %d",
+                cli_args["sitename"],
                 news_id,
-                exc_info=req.status_code
             )
             return
 
         logger.info(
-            "Finished processing news %d / %d of site %s.",
-            news_id,
-            max_id,
-            cli_args['sitename']
+            "Finished processing news %d of site %s.", news_id, cli_args["sitename"]
         )
+
+
+# ------------------------ TRACKER ------------------------------
+def initialize_sqlite() -> None:
+    """Creating database and related table."""
+    conn = sqlite3.connect("tracker.db")
+
+    logger.info("Created sqlite database.")
+
+    conn.execute(
+        """CREATE TABLE tracker
+         (ID INTEGER PRIMARY KEY AUTOINCREMENT     NOT NULL,
+         sitename           CHAR(100)    NOT NULL,
+         host            CHAR(100)     NOT NULL,
+         article_id         INT);
+         """
+    )
+
+    logger.info("Created tracker table.")
+
+    conn.close()
+
+
+def update_tracker(sitename: str, host: str, article_id: int) -> None:
+    """Updating tracker for current database."""
+    conn = sqlite3.connect("tracker.db")
+
+    cur = conn.cursor()
+
+    select_query = "SELECT * FROM tracker where host = :host AND sitename = :sitename"
+
+    result = cur.execute(select_query, {"host": host, "sitename": sitename}).fetchone()
+
+    check_res = None if not result else list(result)
+
+    # If there is not any record beforehand then insert new one.
+    if not check_res:
+        insert_q = "INSERT INTO tracker (sitename,host,article_id) \
+            VALUES (:sitename, :host, :article_id )"
+        cur.execute(
+            insert_q, {"sitename": sitename, "host": host, "article_id": article_id}
+        )
+
+    # If there is already a record then update the article_id
+    else:
+        if article_id > check_res[0]:
+            update_q = "UPDATE tracker SET article_id = :article_id WHERE\
+                host = :host AND sitename = :sitename"
+
+            cur.execute(
+                update_q, {"sitename": sitename, "host": host, "article_id": article_id}
+            )
+
+    conn.commit()
+    conn.close()
+    return
+
+
+def check_tracker(
+    sitename: str,
+    host: str,
+) -> int:
+    """Getting last news id from tracker."""
+    conn = sqlite3.connect("tracker.db")
+
+    cur = conn.cursor()
+    select_query = "SELECT article_id FROM tracker where host = :host AND sitename = \
+:sitename"
+
+    result = cur.execute(select_query, {"sitename": sitename, "host": host}).fetchone()
+
+    last_news_id = None if not result else list(result)
+    conn.close()
+
+    # If there is not any record return 0
+    if not last_news_id:
+        return 0
+    return int(last_news_id[0])
