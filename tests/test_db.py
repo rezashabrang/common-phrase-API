@@ -12,9 +12,9 @@ from phrase_api.lib.db import (
     arango_connection,
     edge_generator,
     fetch_data,
+    insert_phrase_data,
     integrate_phrase_data,
     update_status,
-    insert_phrase_data
 )
 
 

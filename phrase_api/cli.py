@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Module for updating thesaurus."""
 import argparse
-from phrase_api.lib.cli_helper import initialize_sqlite, ingest_site
+
+from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
 
 if __name__ == "__main__":
     # CLI Confs
@@ -11,10 +12,7 @@ if __name__ == "__main__":
     # ----------------------- SQLITE Handler -----------------------
     sqlite_handler = subparsers.add_parser("ini-sqlite", help="Create sqlite db")
     sqlite_handler.add_argument(
-        "--init",
-        action="store_true",
-        required=True,
-        help="Create sqlite database"
+        "--init", action="store_true", required=True, help="Create sqlite database"
     )
 
     # ----------------------- doc-process Enpoint Handler -----------------------
@@ -24,67 +22,44 @@ if __name__ == "__main__":
 
     # Host
     ingest_parser.add_argument(
-        "--host",
-        action="store",
-        help="Host address of the databse",
-        required=True
+        "--host", action="store", help="Host address of the databse", required=True
     )
 
     # Port
     ingest_parser.add_argument(
-        "--port",
-        action="store",
-        help="Port of the databse",
-        default=3306
+        "--port", action="store", help="Port of the databse", default=3306
     )
 
     # Sitename
-    ingest_parser.add_argument(
-        "-s",
-        "--sitename",
-        action="store",
-        help="The sitename"
-    )
+    ingest_parser.add_argument("-s", "--sitename", action="store", help="The sitename")
 
     # Username
     ingest_parser.add_argument(
-        "-u",
-        "--username",
-        action="store",
-        help="Username for access",
-        required=True
+        "-u", "--username", action="store", help="Username for access", required=True
     )
 
     # Password
     ingest_parser.add_argument(
-        "-p",
-        "--password",
-        action="store",
-        help="Password for access",
-        required=True
+        "-p", "--password", action="store", help="Password for access", required=True
     )
 
     # Database
     ingest_parser.add_argument(
-        "-d",
-        "--db",
-        action="store",
-        help="Name of the database",
-        required=True
+        "-d", "--db", action="store", help="Name of the database", required=True
     )
 
     # Tag-stop
     ingest_parser.add_argument(
         "--tag-stop",
         action="store_true",
-        help="Whether to use suggested-stop status. Default is False."
+        help="Whether to use suggested-stop status. Default is False.",
     )
 
     # Replace-stop
     ingest_parser.add_argument(
         "--replace-stop",
         action="store_true",
-        help="Whether to replace stop words. Default is False."
+        help="Whether to replace stop words. Default is False.",
     )
 
     # ID
@@ -93,7 +68,7 @@ if __name__ == "__main__":
         "--id",
         action="store",
         help="Optional arg for starting article id.",
-        type=int
+        type=int,
     )
     # ------------------------- Processing Args ------------------------
     args = vars(common_phrase_api_parser.parse_args())

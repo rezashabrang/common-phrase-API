@@ -17,6 +17,7 @@ services:
             ARANGO_HOST: ${ARANGO_HOST}
             ARANGO_PORT: ${ARANGO_PORT}
             API_KEY: ${API_KEY}
+            WEB_CONCURRENCY: ${WEB_CONCURRENCY}
         volumes:
             - .:/app/
             - /app/.venv

@@ -1,5 +1,4 @@
 """Helper functions for CLI."""
-from cmath import log
 import sqlite3
 from phrase_api.logger import get_logger
 from sqlalchemy import create_engine, select, Column, Integer, Text, BLOB
@@ -7,6 +6,7 @@ import requests
 import os
 from sqlalchemy.orm import declarative_base
 import multiprocessing as mp
+# from time import time
 
 
 Base = declarative_base()
@@ -45,7 +45,7 @@ def update_tracker(
     sitename: str,
     host: str,
     article_id: int
-):
+) -> None:
     """Updating tracker for current database."""
     conn = sqlite3.connect('tracker.db')
 
@@ -83,14 +83,13 @@ def update_tracker(
 def check_tracker(
     sitename: str,
     host: str,
-):
+) -> int:
     """Getting last news id from tracker."""
     conn = sqlite3.connect('tracker.db')
 
     cur = conn.cursor()
-    # conn.execute("DELETE FROM tracker")
-    # conn.commit()
-    select_query = "SELECT article_id FROM tracker where host = :host AND sitename = :sitename"
+    select_query = "SELECT article_id FROM tracker where host = :host AND sitename = \
+:sitename"
 
     result = cur.execute(select_query, {"sitename": sitename, "host": host}).fetchone()
 
@@ -100,7 +99,7 @@ def check_tracker(
     # If there is not any record return 0
     if not last_news_id:
         return 0
-    return last_news_id[0]
+    return int(last_news_id[0])
 
 
 def ingest_site(cli_args):
@@ -122,6 +121,8 @@ def ingest_site(cli_args):
     max_id_query = "SELECT MAX(newsstudio_id) FROM newsstudio_contents"
     max_id = (conn.execute(max_id_query).fetchone())[0]
 
+    conn.close()
+
     logger.info("Checking tracker.")
 
     last_news_id = check_tracker(
@@ -138,20 +139,24 @@ def ingest_site(cli_args):
 
     logger.info("Starting fetching news.")
 
-    # for news_id in range(last_news_id, max_id + 1):
     num_threads = mp.cpu_count()
+
+    # Subgrouping news
+    i = list(range(0, max_id + 101, 100))
+    j = [i - 1 for i in i]
+    news_groups = list(zip(i, j[1:]))
 
     pool = mp.Pool(num_threads)
     pool.starmap(
         ingest_news,
-        zip((news_id for news_id in range(last_news_id, max_id + 1)),
-            (cli_args for _ in range(last_news_id, max_id + 1)),
-            (max_id for _ in range(last_news_id, max_id + 1))
+        zip((news_ids for news_ids in news_groups),
+            (cli_args for _ in range(len(news_groups))),
+            (max_id for _ in range(len(news_groups)))
             ))
 
 
 def ingest_news(
-    news_id, cli_args, max_id
+    news_ids, cli_args, max_id
 ):
     """Ingesting each news"""
     db_engine = create_engine(
@@ -166,49 +171,58 @@ def ingest_news(
     )
     conn = db_engine.connect()
     # Fetching article text
-    query = select(News.content).where(News.newsstudio_id == news_id)
-    news_content = conn.execute(query).fetchone()
+    query = select([News.content, News.newsstudio_id]).where(
+        News.newsstudio_id.between(news_ids[0], news_ids[1])
+    )
+    news_content = conn.execute(query).fetchall()
 
     # If there is no result continue
     if news_content is None:
-        logger.info("No news for id %d", news_id)
+        logger.info("No news for ids between %d and %d", news_ids[0], news_ids[1])
         return
 
-    news_content = news_content[0]
+    news_content = list(news_content)
+
     conn.close()
-    # --------------- Creating request to doc-process endpoint ---------------
-    payload = {
-        "document": news_content
-    }
-    headers = {
-        "x-token": os.getenv("API_KEY")
-    }
-    # TODO maybe setting rootpath in env file?
-    request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
+    db_engine.dispose()
+    for content in news_content:
+        news = content[0]
+        news_id = content[1]
+        # --------------- Creating request to doc-process endpoint ---------------
+        payload = {
+            "document": news
+        }
+        headers = {
+            "x-token": os.getenv("API_KEY")
+        }
+        # TODO maybe setting rootpath in env file?
+        request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
 replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
 &doc_id={news_id}&sitename={cli_args['sitename']}"
 
-    req = requests.post(
-        request_url,
-        json=payload,
-        headers=headers
-    )
-
-    if req.status_code == 201:
-        update_tracker(
-            sitename=cli_args["sitename"],
-            host=cli_args["host"],
-            article_id=news_id
+        req = requests.post(
+            request_url,
+            json=payload,
+            headers=headers
         )
-    else:
-        logger.error(
-            "Failed ingesting %s - news_id: %d", cli_args['sitename'], news_id
-        )
-        return
 
-    logger.info(
-        "Finished processing news %d / %d of site %s.",
-        news_id,
-        max_id,
-        cli_args['sitename']
-    )
+        if req.status_code == 201:
+            update_tracker(
+                sitename=cli_args["sitename"],
+                host=cli_args["host"],
+                article_id=news_id
+            )
+        else:
+            logger.error(
+                "Failed ingesting %s - news_id: %d", cli_args['sitename'],
+                news_id,
+                exc_info=req.status_code
+            )
+            return
+
+        logger.info(
+            "Finished processing news %d / %d of site %s.",
+            news_id,
+            max_id,
+            cli_args['sitename']
+        )

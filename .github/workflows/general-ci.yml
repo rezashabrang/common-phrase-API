@@ -24,6 +24,8 @@ jobs:
     - name: Run style checks
       run: |
         docker exec -i phrase-wrapper make check-codestyle
+      continue-on-error: true
+      
     - name: Run tests
       run: |
         docker exec -i phrase-wrapper make test
@@ -33,17 +35,24 @@ jobs:
     - name: Run safety checks
       run: |
         docker exec -i phrase-wrapper make check-safety
-      continue-on-error: true
 
     - name: Run mypy checks
       run: |
         docker exec -i phrase-wrapper make mypy
+      continue-on-error: true
+
     - name: Run complexity
       run: |
         docker exec -i phrase-wrapper make complexity
+      continue-on-error: true
+      
     - name: Run maintainability
       run: |
         docker exec -i phrase-wrapper make maintainability
+      continue-on-error: true
+
     - name: Run interrogate
       run: |
         docker exec -i phrase-wrapper make interrogate
+      continue-on-error: true
+      

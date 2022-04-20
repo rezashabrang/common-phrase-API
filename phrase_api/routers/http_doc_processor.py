@@ -62,15 +62,23 @@ async def process_document(
     """
     try:
         logger.info("Starting")
-        s = time()
         # --------------------------- INGEST ---------------------------
         logger.info("counting phrases")
+
+        s_tot = time()
+
+        s = time()
+
         phrase_count_res = ingest_doc(
             doc=doc.document,
             doc_type=doc_type,
             replace_stop=replace_stop,
             tag_stop=tag_stop
         )
+
+        e = time()
+
+        logger.info("Time taken for processing content: %f s", e-s)
 
         # Additional MetaData
         phrase_count_res["sitename"] = sitename
@@ -79,14 +87,20 @@ async def process_document(
 
         # --------------------------- INSERTION ---------------------------
         logger.info("inserting nodes")
+        s = time()
+
         insert_phrase_data(phrase_count_res)
 
         e = time()
 
+        logger.info("Time taken for inserting processed news: %f s", e-s)
+
         res = {"message": "Results integration done."}
 
         logger.info("Results insertion done!")
-        logger.info("Total time: %.3f s", e - s)
+
+        e_tot = time()
+        logger.info("Total time: %.3f s", e_tot - s_tot)
         return res
 
     except HTTPException as err:

@@ -39,8 +39,6 @@ def edge_generator(dataframe: DataFrame) -> DataFrame:
         comb = []  # Combinations list
         static_node = dataframe.iloc[i]["_key"]
 
-        s = time()
-
         for j in range(i + 1, len(dataframe)):
             dynamic_node = dataframe.iloc[j]["_key"]
             comb.append((static_node, dynamic_node))
@@ -55,8 +53,6 @@ def edge_generator(dataframe: DataFrame) -> DataFrame:
         edge_df["_to"] = vertex_col_name + "/" + edge_df["_to"].astype(str)
         edge_df["count"] = 1
 
-        e = time()
-
         yield edge_df
 
 
@@ -70,8 +66,6 @@ def integrate_phrase_data(
         result: JSON result of counted phrases or generated edges.
         data_type: Either vertex or edge.
     """
-    s = time()
-
     # ------------------ Initialization & Connecting to database ------------------
     vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
     edge_col_name = os.getenv("ARANGO_EDGE_COLLECTION")
@@ -105,8 +99,6 @@ def integrate_phrase_data(
     collection.import_bulk(bulk_insert)
 
     client.close()
-
-    e = time()
 
 
 def insert_phrase_data(

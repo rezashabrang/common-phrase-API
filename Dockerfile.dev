@@ -11,8 +11,7 @@ ENV LANG=C.UTF-8 \
     PYTHONUNBUFFERED=1
 
 # install dependencies
-RUN apt update && apt upgrade -y && apt install curl -y && apt install build-essential python3-dev libicu-dev pkg-config -y
-RUN apt install -y libmariadb-dev
+RUN apt update && apt upgrade -y && apt install curl -y && apt install build-essential python3-dev libicu-dev pkg-config libmariadb-dev -y
 
 COPY pyproject.toml /app
 
@@ -28,4 +27,4 @@ COPY . /app
 
 # Final
 WORKDIR /app
-CMD ["uvicorn", "phrase_api.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+CMD ["uvicorn", "phrase_api.main:app", "--host", "0.0.0.0", "--port", "80", "--workers","$WEB_CONCURRENCY"]
