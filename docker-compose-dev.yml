@@ -7,6 +7,8 @@ services:
             context: .
         image: phrase-wrapper
         container_name: phrase-wrapper
+        networks:
+            - phrase-net
         environment:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}
@@ -18,15 +20,20 @@ services:
             ARANGO_PORT: ${ARANGO_PORT}
             API_KEY: ${API_KEY}
             WEB_CONCURRENCY: ${WEB_CONCURRENCY}
+            PROMETHEUS_PY_PORT: ${PROMETHEUS_PY_PORT}
         volumes:
             - .:/app/
             - /app/.venv
         ports:
             - "8000:80"
+            - "8005:8005"
+
     phrase-db:
         image: arangodb
         container_name: phrase-db
         restart: always
+        networks:
+            - phrase-net
         environment:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}
@@ -40,3 +47,18 @@ services:
             - 8001:8529
         volumes:
             - ./data/arango:/var/lib/arangodb3
+
+    # prometheus:
+    #     image: prom/prometheus
+    #     container_name: prometheus
+    #     networks:
+    #         - phrase-net
+    #     restart: always
+    #     ports:
+    #         - 9090:9090
+    #     volumes:
+    #         - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+networks:
+    phrase-net:
+        name: phrase-net

@@ -4,14 +4,11 @@ import os
 import sqlite3
 
 import requests
-from sqlalchemy import BLOB, Column, Integer, Text, create_engine, select
+from sqlalchemy import BLOB, Column, Integer, Text, create_engine, select, update, and_
 from sqlalchemy.exc import OperationalError, TimeoutError
 from sqlalchemy.orm import declarative_base
 
 from phrase_api.logger import get_logger
-
-# from time import time
-
 
 Base = declarative_base()
 
@@ -26,6 +23,7 @@ class News(Base):
     newsstudio_id = Column(Integer, primary_key=True)
     content = Column(Text)
     newsstudio_content_data = Column(BLOB)
+    proc_status = Column(Integer)
 
 
 def ingest_site(cli_args):
@@ -48,20 +46,7 @@ def ingest_site(cli_args):
     max_id = (conn.execute(max_id_query).fetchone())[0]
 
     conn.close()
-
-    logger.info("Checking tracker.")
-
-    last_news_id = check_tracker(
-        sitename=cli_args["sitename"],
-        host=cli_args["host"],
-    )
-
-    if last_news_id == 0:
-        logger.info("First time ingesting %s.", cli_args["sitename"])
-    else:
-        logger.info(
-            "Starting from news id %d for site %s", last_news_id, cli_args["sitename"]
-        )
+    db_engine.dispose()
 
     logger.info("Starting fetching news.")
 
@@ -85,60 +70,92 @@ def ingest_site(cli_args):
 
 def ingest_news(news_ids, cli_args, max_id):
     """Ingesting each news"""
-    db_engine = create_engine(
-        "mysql://{username}:{password}@{host}:{port}/{db}?charset={ch}".format(
-            username=cli_args["username"],
-            password=cli_args["password"],
-            host=cli_args["host"],
-            port=cli_args["port"],
-            db=cli_args["db"],
-            ch="utf8",
+    try:
+        # database engine
+        db_engine = create_engine(
+            "mysql://{username}:{password}@{host}:{port}/{db}?charset={ch}".format(
+                username=cli_args["username"],
+                password=cli_args["password"],
+                host=cli_args["host"],
+                port=cli_args["port"],
+                db=cli_args["db"],
+                ch="utf8",
+            )
         )
-    )
-    conn = db_engine.connect()
-    # Fetching article text
-    query = select([News.content, News.newsstudio_id]).where(
-        News.newsstudio_id.between(news_ids[0], news_ids[1])
-    )
-    news_content = conn.execute(query).fetchall()
+        conn = db_engine.connect()
 
-    # If there is no result continue
-    if news_content is None:
-        logger.info("No news for ids between %d and %d", news_ids[0], news_ids[1])
-        return
+        # Fetching article text
+        query = select([News.content, News.newsstudio_id]).where(
+            and_(
+                News.newsstudio_id.between(news_ids[0], news_ids[1]),
+                News.proc_status != 1
+            )
+        )
+        news_content = conn.execute(query).fetchall()
 
-    news_content = list(news_content)
+        # If there is no result continue
+        if news_content is None:
+            logger.info("No news for ids between %d and %d", news_ids[0], news_ids[1])
+            return
 
-    conn.close()
-    db_engine.dispose()
-    for content in news_content:
-        news = content[0]
-        news_id = content[1]
-        # --------------- Creating request to doc-process endpoint ---------------
-        payload = {"document": news}
-        headers = {"x-token": os.getenv("API_KEY")}
-        # TODO maybe setting rootpath in env file?
-        request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
+        news_content = list(news_content)
+
+        for content in news_content:
+            news = content[0]
+            news_id = content[1]
+
+            # --------------- Creating request to doc-process endpoint ---------------
+            payload = {"document": news}
+            headers = {"x-token": os.getenv("API_KEY")}
+            request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
 replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
 &doc_id={news_id}&sitename={cli_args['sitename']}"
 
-        req = requests.post(request_url, json=payload, headers=headers)
+            req = requests.post(request_url, json=payload, headers=headers)
 
-        if req.status_code == 201:
-            update_tracker(
-                sitename=cli_args["sitename"], host=cli_args["host"], article_id=news_id
-            )
-        else:
-            logger.error(
-                "Failed ingesting %s - news_id: %d",
-                cli_args["sitename"],
-                news_id,
-            )
-            return
+            # --------------- Updating process status in news DB ---------------
+            if req.status_code == 201:
 
-        logger.info(
-            "Finished processing news %d of site %s.", news_id, cli_args["sitename"]
+                update_query = (update(News).where(
+                    News.newsstudio_id == news_id).values(proc_status=1))
+
+                conn.execute(update_query)
+                logger.info(
+                    "Finished processing news %d of site %s.",
+                    news_id,
+                    cli_args["sitename"]
+                )
+
+            else:
+                logger.error(
+                    "Failed ingesting %s - news_id: %d",
+                    cli_args["sitename"],
+                    news_id,
+                )
+                update_query = (update(News).where(
+                    News.newsstudio_id == news_id).values(proc_status=2))
+
+                conn.execute(update_query)
+
+    except (OperationalError, TimeoutError) as err:
+        logger.error("Failed connecting to news database.", exc_info=err)
+        conn.close()
+        db_engine.dispose()
+        return
+
+    except Exception as err:
+        logger.error(
+            "ERROR ingesting news batch: %d - %d. Unexpected exception.",
+            news_ids[0],
+            news_ids[1],
+            exc_info=err
         )
+        conn.close()
+        db_engine.dispose()
+        return
+
+    conn.close()
+    db_engine.dispose()
 
 
 # ------------------------ TRACKER ------------------------------

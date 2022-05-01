@@ -48,6 +48,7 @@ python-arango = "*"
 phrase-counter = "^0.1.1"
 sqlalchemy = "*"
 mysqlclient = "^2.1.0"
+prometheus-client = "^0.14.1"
 
 
 [tool.poetry.dev-dependencies]
