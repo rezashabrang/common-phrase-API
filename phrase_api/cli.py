@@ -3,16 +3,19 @@
 import argparse
 
 from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
+from phrase_api.scripts.progress_viewer import view_progress
 
 if __name__ == "__main__":
     # CLI Confs
     common_phrase_api_parser = argparse.ArgumentParser()
-    subparsers = common_phrase_api_parser.add_subparsers()
+    subparsers = common_phrase_api_parser.add_subparsers(dest="command")
 
     # ----------------------- SQLITE Handler -----------------------
     sqlite_handler = subparsers.add_parser("ini-sqlite", help="Create sqlite db")
-    sqlite_handler.add_argument(
-        "--init", action="store_true", required=True, help="Create sqlite database"
+
+    # ------------------------- Progress Viewer -------------------------
+    prog_handler = subparsers.add_parser(
+        "view-progress", help="View progress for ingestion"
     )
 
     # ----------------------- doc-process Enpoint Handler -----------------------
@@ -72,7 +75,9 @@ if __name__ == "__main__":
     )
     # ------------------------- Processing Args ------------------------
     args = vars(common_phrase_api_parser.parse_args())
-    if "init" in args:
+    if args["command"] == "ini-sqlite":
         initialize_sqlite()
-    else:
+    elif args["command"] == "ingest":
         ingest_site(args)
+    elif args["command"] == "view-progress":
+        view_progress()
