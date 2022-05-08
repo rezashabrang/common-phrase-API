@@ -5,6 +5,7 @@ import argparse
 from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
 from phrase_api.scripts.progress_viewer import view_progress
 from phrase_api.scripts.NER_extractor import ner_handler
+from phrase_api.scripts.chunk_aggregate import aggregation_handler
 
 if __name__ == "__main__":
     # CLI Confs
@@ -26,6 +27,29 @@ if __name__ == "__main__":
     # NER path
     ner_handler_parser.add_argument(
         "--ner_path", action="store", help="Path to the NER files", required=True
+    )
+
+    # ------------------------- Chunk Aggregator -------------------------
+    agg_handler = subparsers.add_parser(
+        "chunk-agg", help="Aggregating phrases in database."
+    )
+
+    # sitename
+    agg_handler.add_argument(
+        "--sitename", action="store", help="Name of the ingested site", required=True
+    )
+
+    # max ID
+    agg_handler.add_argument(
+        "--maxID", action="store",
+        help="Maximum ID of the ingested site", required=False
+    )
+
+    # ID List
+    agg_handler.add_argument(
+        "--IDList",
+        nargs="+",
+        action="store", help="List of IDs", required=False
     )
 
     # ----------------------- doc-process Enpoint Handler -----------------------
@@ -93,3 +117,5 @@ if __name__ == "__main__":
         view_progress()
     elif args["command"] == "process-NER":
         ner_handler(args["ner_path"])
+    elif args["command"] == "chunk-agg":
+        aggregation_handler(args)
