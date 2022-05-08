@@ -3,7 +3,6 @@ from typing import Dict, List, Union
 
 import os
 from hashlib import sha256
-from time import time
 
 import pandas as pd
 from arango import ArangoClient

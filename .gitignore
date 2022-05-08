@@ -137,3 +137,4 @@ dmypy.json
 !/phrase_api/lib
 sample_news.xlsx
 tracker.db
+test_data/

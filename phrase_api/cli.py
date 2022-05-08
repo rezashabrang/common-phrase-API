@@ -4,6 +4,7 @@ import argparse
 
 from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
 from phrase_api.scripts.progress_viewer import view_progress
+from phrase_api.scripts.NER_extractor import ner_handler
 
 if __name__ == "__main__":
     # CLI Confs
@@ -16,6 +17,15 @@ if __name__ == "__main__":
     # ------------------------- Progress Viewer -------------------------
     prog_handler = subparsers.add_parser(
         "view-progress", help="View progress for ingestion"
+    )
+
+    # ------------------------- NER Process Handler -------------------------
+    ner_handler_parser = subparsers.add_parser(
+        "process-NER", help="Process a file or directory containing NER files."
+    )
+    # NER path
+    ner_handler_parser.add_argument(
+        "--ner_path", action="store", help="Path to the NER files", required=True
     )
 
     # ----------------------- doc-process Enpoint Handler -----------------------
@@ -81,3 +91,5 @@ if __name__ == "__main__":
         ingest_site(args)
     elif args["command"] == "view-progress":
         view_progress()
+    elif args["command"] == "process-NER":
+        ner_handler(args["ner_path"])
