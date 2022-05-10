@@ -138,3 +138,4 @@ dmypy.json
 sample_news.xlsx
 tracker.db
 test_data/
+ner-data

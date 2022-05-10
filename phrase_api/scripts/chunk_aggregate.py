@@ -3,6 +3,8 @@ import os
 from phrase_api.lib.db import arango_connection
 import multiprocessing as mp
 from phrase_api.logger import get_logger
+from arango.exceptions import AQLQueryExecuteError
+from time import sleep
 
 LOGGER = get_logger("Chunk-AGG")
 
@@ -34,10 +36,11 @@ def aggregation_handler(
     pool.starmap(
         chunk_aggregate,
         zip(
-            (sitename for _ in range(max_records)),
+            (sitename for _ in range(max_records + 1)),
             doc_id_list
         ),
     )
+    LOGGER.info("Chunk aggregator process finished.")
 
 
 def chunk_aggregate(
@@ -75,6 +78,7 @@ def chunk_aggregate(
             doc_fetch_query,
             bind_vars=bind_parameters
         )
+        records = list(records)
     except Exception as err:
         LOGGER.error(
             "Failed fetching records for doc ID %s, sitename %s.",
@@ -84,12 +88,15 @@ def chunk_aggregate(
         )
         return
 
-    if not list(records):
+    if not records:
         LOGGER.info("No record for doc ID %s, sitename %s", doc_id, sitename)
         return
-
-    for record in list(records):
+    for record in records:
         try:
+            if "agg_status" in record:
+                if record["agg_status"] == 1:
+                    continue
+
             aggregate_record(record, phrase_db)
         except Exception as err:
             LOGGER.error(
@@ -140,8 +147,20 @@ def aggregate_record(record: dict, phrase_client):
         "phrase_length": phrase_length,
         "phrase_key": phrase_key
     }
+    try_counter = 1
+    while True:
+        try:
+            phrase_client.aql.execute(
+                upsert_query,
+                bind_vars=bind_parameters
+            )
+            break
+        except AQLQueryExecuteError:
+            LOGGER.warning(
+                "AQL exception for _key %s. Retrying (%d).",
+                phrase_key,
+                try_counter
+            )
+            try_counter += 1
+            sleep(0.1)
 
-    phrase_client.aql.execute(
-        upsert_query,
-        bind_vars=bind_parameters
-    )
