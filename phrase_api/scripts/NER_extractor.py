@@ -55,7 +55,6 @@ def clean_ne_records(record: str):
 def upsert_results(df: pd.DataFrame):
     """Integrating results in arangodb."""
     ner_col = os.getenv("NER_COLLECTION")
-    print(ner_col)
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
@@ -85,13 +84,13 @@ def process_ner(file_path: str):
         dataframe = process_ner_file(ner_text)
         upsert_results(dataframe)
     except Exception as err:
-        LOGGER.error("Failed processing ner file: %s\nError: %s", file_path, err)
+        LOGGER.error("Failed processing ner file: %s", file_path, exc_info=err)
         return
 
     LOGGER.info("Finished processing NER file: %s", file_path)
 
 
-def ner_handler(data_path: str):
+def ner_handler(data_path: str, n_jobs=mp.cpu_count()-4):
     """Prcoessing NER files for given path
 
     Args:
@@ -104,7 +103,10 @@ def ner_handler(data_path: str):
         # multiprocessing implementation
         LOGGER.info("Detected a NER folder for processing.")
 
-        num_threads = max(mp.cpu_count() - 4, 2)
+        num_threads = max(n_jobs, 2)
+
+        LOGGER.info("Using %d processes for the job.", num_threads)
+
         ner_files = os.listdir(data_path)
         pool = mp.Pool(num_threads)
         pool.starmap(
@@ -124,6 +126,3 @@ def ner_handler(data_path: str):
 
     LOGGER.info("NER processing job finished.")
 
-
-# path_f = "/home/reza/Desktop/AASAAM/persian-NER/extractor/test_data/"
-# ner_handler(path_f)

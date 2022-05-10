@@ -29,6 +29,12 @@ if __name__ == "__main__":
         "--ner_path", action="store", help="Path to the NER files", required=True
     )
 
+    # NER Jobs
+    ner_handler_parser.add_argument(
+        "--n_jobs", action="store", help="Number of processes to run on.",
+        required=False
+    )
+
     # ------------------------- Chunk Aggregator -------------------------
     agg_handler = subparsers.add_parser(
         "chunk-agg", help="Aggregating phrases in database."
