@@ -7,6 +7,7 @@ from hashlib import sha256
 import multiprocessing as mp
 from phrase_api.logger import get_logger
 from phrase_api.lib.db import arango_connection
+from arango.exceptions import AQLQueryExecuteError
 
 LOGGER = get_logger("NER-Extractor")
 
@@ -27,11 +28,11 @@ def process_ner_file(raw_ne: str):
     ne_records_part = [match.group() for match in ne_regex]
     # ------------------- Records Cleaning -------------------
     cleaned_ne_records = [clean_ne_records(record) for record in ne_records_part]
-
     # ------------------- Text Part Fetching & Cleaning -------------------
     ne_record = set([
         replace_arabic_char(ne) for ne, type_ne in (
             record_part.split(" ") for record_part in cleaned_ne_records
+            if len(record_part.split(" ")) == 2
         ) if type_ne != "O" and type_ne.startswith(("I", "B", "E", "S"))
     ])
 
@@ -73,8 +74,11 @@ def upsert_results(df: pd.DataFrame):
             INSERT {"_key": @word_hash, "word": @word}
             INTO @@ner_col OPTIONS { overwriteMode: "ignore" }
             """
-
-        phrase_db.aql.execute(query=query, bind_vars=bind_vars)
+        try:
+            phrase_db.aql.execute(query=query, bind_vars=bind_vars)
+        except AQLQueryExecuteError:
+            LOGGER.info("Failed because of lock error. Continuing.")
+            return
 
 
 def process_ner(file_path: str):
@@ -125,4 +129,3 @@ def ner_handler(data_path: str, n_jobs=mp.cpu_count()-4):
         raise Exception("Unkown path format.")
 
     LOGGER.info("NER processing job finished.")
-
