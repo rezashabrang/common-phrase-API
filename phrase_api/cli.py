@@ -6,6 +6,7 @@ from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
 from phrase_api.scripts.progress_viewer import view_progress
 from phrase_api.scripts.NER_extractor import ner_handler
 from phrase_api.scripts.chunk_aggregate import aggregation_handler
+from phrase_api.scripts.NE_search import tag_handler
 
 if __name__ == "__main__":
     # CLI Confs
@@ -18,6 +19,30 @@ if __name__ == "__main__":
     # ------------------------- Progress Viewer -------------------------
     prog_handler = subparsers.add_parser(
         "view-progress", help="View progress for ingestion"
+    )
+
+    # ------------------------- NER Search Handler -------------------------
+    ner_search_handler_parser = subparsers.add_parser(
+        "search-NE", help="Search for NE and tag them with suggested highlight."
+    )
+
+    # Max Records
+    ner_search_handler_parser.add_argument(
+        "--max_records", action="store",
+        help="Total Number of records in aggregated collection",
+        required=True, type=int
+    )
+
+    # Chunk Size
+    ner_search_handler_parser.add_argument(
+        "--chunk_size", action="store", help="N records to fetch in each job",
+        required=False, default=1000, type=int
+    )
+
+    # NER Search Jobs
+    ner_search_handler_parser.add_argument(
+        "--n_jobs", action="store", help="Number of processes to run on.",
+        required=False, default=1
     )
 
     # ------------------------- NER Process Handler -------------------------
@@ -125,3 +150,9 @@ if __name__ == "__main__":
         ner_handler(args["ner_path"])
     elif args["command"] == "chunk-agg":
         aggregation_handler(args)
+    elif args["command"] == "search-NE":
+        tag_handler(
+            max_records=args["max_records"],
+            chunk_size=args["chunk_size"],
+            n_jobs=args["n_jobs"]
+        )
