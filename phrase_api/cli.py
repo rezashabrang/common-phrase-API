@@ -122,6 +122,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Whether to use suggested-stop status. Default is False.",
     )
+    # Tag-Highlight
+    ingest_parser.add_argument(
+        "--tag-highlight",
+        action="store_true",
+        help="Whether to use suggested-highlight status. Default is False.",
+    )
 
     # Replace-stop
     ingest_parser.add_argument(

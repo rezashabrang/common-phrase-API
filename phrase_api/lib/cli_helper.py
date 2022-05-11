@@ -109,6 +109,7 @@ def ingest_news(news_ids, cli_args, max_id):
             headers = {"x-token": os.getenv("API_KEY")}
             request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
 replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
+&tag_highlight={cli_args['tag_highlight']}\
 &doc_id={news_id}&sitename={cli_args['sitename']}"
 
             req = requests.post(request_url, json=payload, headers=headers)

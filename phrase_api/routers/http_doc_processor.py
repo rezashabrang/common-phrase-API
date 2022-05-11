@@ -10,6 +10,8 @@ from pydantic import BaseModel
 
 from phrase_api.logger import get_logger
 
+from lib.status_updater import highlight_detector
+
 # ------------------------------ Initialization -------------------------------
 router = APIRouter()
 logger = get_logger(__name__)
@@ -34,6 +36,7 @@ async def process_document(
     doc_type: str = Query("TEXT", enum=["TEXT", "HTML", "URL"]),
     replace_stop: bool = False,
     tag_stop: bool = False,
+    tag_highlight: bool = False,
     sitename: Optional[str] = None,
     doc_id: Optional[str] = None,
 ) -> Dict[str, str]:
@@ -75,6 +78,15 @@ async def process_document(
             replace_stop=replace_stop,
             tag_stop=tag_stop,
         )
+
+        # Changing status to suggested highlight for phrases that are named entity
+        if tag_highlight:
+            phrase_count_res["status"] = phrase_count_res.apply(
+                lambda row: highlight_detector(
+                    row["bag"]
+                ) if row["status"] != "suggested-stop" else row["status"],
+                axis=1
+            )
 
         e = time()
 
