@@ -24,7 +24,7 @@ def tag_handler(
     """
     LOGGER.info("Starting NE Search process.")
 
-    offset_times = ceil(max_records/chunk_size)
+    offset_times = ceil(max_records / chunk_size)
     offset_list = [offset * chunk_size for offset in range(offset_times)]
 
     LOGGER.info("A total number of %d jobs needs to be completed.", len(offset_list))

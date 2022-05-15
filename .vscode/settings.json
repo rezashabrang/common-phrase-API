@@ -15,5 +15,9 @@
   "python.formatting.provider": "autopep8",
   "python.linting.pylintArgs": [
     "--disable=E0611"
-  ]
+  ],
+  "python.linting.flake8Args": [
+    "--max-line-length=120",
+    "--ignore=F841",
+  ],
 }

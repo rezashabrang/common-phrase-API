@@ -2,13 +2,21 @@
 """Module for updating thesaurus."""
 import argparse
 
+import sys
+
 from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
 from phrase_api.scripts.progress_viewer import view_progress
 from phrase_api.scripts.NER_extractor import ner_handler
 from phrase_api.scripts.chunk_aggregate import aggregation_handler
 from phrase_api.scripts.NE_search import tag_handler
 
-if __name__ == "__main__":
+
+def cli_wrapper(args):
+    """CLI configurations
+
+    Args:
+        args: Command Line input for parsing.
+    """
     # CLI Confs
     common_phrase_api_parser = argparse.ArgumentParser()
     subparsers = common_phrase_api_parser.add_subparsers(dest="command")
@@ -145,7 +153,17 @@ if __name__ == "__main__":
         type=int,
     )
     # ------------------------- Processing Args ------------------------
-    args = vars(common_phrase_api_parser.parse_args())
+    args = vars(common_phrase_api_parser.parse_args(args))
+
+    return args
+
+
+def run_commands(args: dict):
+    """Running command based on parsed cli arguments.
+
+    Args:
+        args: Parsed CLI arguments.
+    """
     if args["command"] == "ini-sqlite":
         initialize_sqlite()
     elif args["command"] == "ingest":
@@ -162,3 +180,7 @@ if __name__ == "__main__":
             chunk_size=args["chunk_size"],
             n_jobs=args["n_jobs"]
         )
+
+
+args = cli_wrapper(sys.argv[1:])
+run_commands(args)

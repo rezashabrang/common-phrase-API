@@ -232,6 +232,7 @@ subprocess = [
 
 [tool.flake8]
 max-line-length = 88
+ignore = "F841"
 
 [tool.pydocstyle]
 convention = "google"
