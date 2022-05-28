@@ -4,17 +4,24 @@ from typing import Dict, Optional
 from time import time
 
 from fastapi import APIRouter, HTTPException, Query
-from lib.db import insert_phrase_data
+from lib.db import integrate_phrase_data
 from phrase_counter.ingest import ingest_doc
 from pydantic import BaseModel
 
 from phrase_api.logger import get_logger
 
-from lib.status_updater import highlight_detector
+from lib.status_updater import (
+    status_detector, get_named_entities, get_stop_words_regex
+)
+
 
 # ------------------------------ Initialization -------------------------------
 router = APIRouter()
 logger = get_logger(__name__)
+
+NE_LIST = get_named_entities()
+STOP_PATTERN = get_stop_words_regex()
+
 
 # ---------------------------- function definition ----------------------------
 
@@ -65,12 +72,11 @@ async def process_document(
     """
     try:
         logger.info("Starting")
-        # --------------------------- INGEST ---------------------------
-        logger.info("counting phrases")
-
         s_tot = time()
+        # ---------------------------------- INGEST ----------------------------------
+        logger.info("Counting phrases")
 
-        s = time()
+        s_ingest = time()
 
         phrase_count_res = ingest_doc(
             doc=doc.document,
@@ -79,40 +85,54 @@ async def process_document(
             tag_stop=tag_stop,
         )
 
-        # Changing status to suggested highlight for phrases that are named entity
-        if tag_highlight:
-            phrase_count_res["status"] = phrase_count_res.apply(
-                lambda row: highlight_detector(
-                    row["bag"]
-                ) if row["status"] != "suggested-stop" else row["status"],
-                axis=1
-            )
+        e_ingest = time()
 
-        e = time()
+        logger.debug(
+            "Time taken for ingesting document: %.1f ms", (e_ingest - s_ingest) * 1000
+        )
 
-        logger.info("Time taken for processing content: %f s", e - s)
+        # ----------------------------- Status Detector -----------------------------
+        logger.info("Detecting Statuses")
 
-        # Additional MetaData
-        phrase_count_res["sitename"] = sitename
-        phrase_count_res["doc_id"] = doc_id
-        phrase_count_res = phrase_count_res.rename(columns={"_key": "phrase_hash"})
+        s_status = time()
 
-        # --------------------------- INSERTION ---------------------------
-        logger.info("inserting nodes")
-        s = time()
+        phrase_count_res["status"] = [
+            status_detector(
+                phrase, STOP_PATTERN, NE_LIST
+            ) for phrase in phrase_count_res["bag"]
+        ]
 
-        insert_phrase_data(phrase_count_res)
+        e_status = time()
 
-        e = time()
+        logger.info(
+            "Time taken for status detection: %.1f ms", (e_status - s_status) * 1000
+        )
 
-        logger.info("Time taken for inserting processed news: %f s", e - s)
+        # --------------------------- Integration ---------------------------
+        logger.info("Integrating nodes")
+
+        s_integrate = time()
+
+        upsert_time, convert_time, connection_time = integrate_phrase_data(
+            phrase_count_res)
+
+        e_integrate = time()
+
+        logger.debug(
+            "Time taken for upserting document: %.1f ms",
+            (e_integrate - s_integrate) * 1000
+        )
+
+        # ---------------------------------------------------------------
 
         res = {"message": "Results integration done."}
 
-        logger.info("Results insertion done!")
+        logger.info("Results integration done!")
 
         e_tot = time()
-        logger.info("Total time: %.3f s", e_tot - s_tot)
+
+        logger.debug("Total time: %.3f Seconds", e_tot - s_tot)
+
         return res
 
     except HTTPException as err:

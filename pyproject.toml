@@ -45,11 +45,13 @@ polyglot = "*"
 PyICU = "^2.8.1"
 pycld2 = "^0.41"
 python-arango = "*"
-phrase-counter = "^0.1.1"
+phrase-counter = "^0.1.6"
 sqlalchemy = "*"
 mysqlclient = "^2.1.0"
 prometheus-client = "^0.14.1"
 tqdm = "*"
+pymongo = "^4.1.1"
+matplotlib = "^3.5.2"
 
 
 [tool.poetry.dev-dependencies]
@@ -82,6 +84,7 @@ types-requests = "*"
 openpyxl = "*"
 ipykernel = "*"
 black = "^22.3.0"
+notebook = "^6.4.11"
 
 [tool.black]
 # https://github.com/psf/black

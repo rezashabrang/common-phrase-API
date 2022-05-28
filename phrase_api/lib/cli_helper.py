@@ -50,7 +50,8 @@ def ingest_site(cli_args):
 
     logger.info("Starting fetching news.")
 
-    num_threads = mp.cpu_count()
+    num_threads = cli_args["n-jobs"] if "n-jobs" in cli_args else max(
+        mp.cpu_count() - 2, 1)
 
     # Subgrouping news
     i = list(range(0, max_id + 101, 100))
@@ -157,81 +158,3 @@ replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
 
     conn.close()
     db_engine.dispose()
-
-
-# ------------------------ TRACKER ------------------------------
-def initialize_sqlite() -> None:
-    """Creating database and related table."""
-    conn = sqlite3.connect("tracker.db")
-
-    logger.info("Created sqlite database.")
-
-    conn.execute(
-        """CREATE TABLE tracker
-         (ID INTEGER PRIMARY KEY AUTOINCREMENT     NOT NULL,
-         sitename           CHAR(100)    NOT NULL,
-         host            CHAR(100)     NOT NULL,
-         article_id         INT);
-         """
-    )
-
-    logger.info("Created tracker table.")
-
-    conn.close()
-
-
-def update_tracker(sitename: str, host: str, article_id: int) -> None:
-    """Updating tracker for current database."""
-    conn = sqlite3.connect("tracker.db")
-
-    cur = conn.cursor()
-
-    select_query = "SELECT * FROM tracker where host = :host AND sitename = :sitename"
-
-    result = cur.execute(select_query, {"host": host, "sitename": sitename}).fetchone()
-
-    check_res = None if not result else list(result)
-
-    # If there is not any record beforehand then insert new one.
-    if not check_res:
-        insert_q = "INSERT INTO tracker (sitename,host,article_id) \
-            VALUES (:sitename, :host, :article_id )"
-        cur.execute(
-            insert_q, {"sitename": sitename, "host": host, "article_id": article_id}
-        )
-
-    # If there is already a record then update the article_id
-    else:
-        if article_id > check_res[0]:
-            update_q = "UPDATE tracker SET article_id = :article_id WHERE\
-                host = :host AND sitename = :sitename"
-
-            cur.execute(
-                update_q, {"sitename": sitename, "host": host, "article_id": article_id}
-            )
-
-    conn.commit()
-    conn.close()
-    return
-
-
-def check_tracker(
-    sitename: str,
-    host: str,
-) -> int:
-    """Getting last news id from tracker."""
-    conn = sqlite3.connect("tracker.db")
-
-    cur = conn.cursor()
-    select_query = "SELECT article_id FROM tracker where host = :host AND sitename = \
-:sitename"
-
-    result = cur.execute(select_query, {"sitename": sitename, "host": host}).fetchone()
-
-    last_news_id = None if not result else list(result)
-    conn.close()
-
-    # If there is not any record return 0
-    if not last_news_id:
-        return 0
-    return int(last_news_id[0])

@@ -152,6 +152,13 @@ def cli_wrapper(args):
         help="Optional arg for starting article id.",
         type=int,
     )
+    # n-jobs
+    ingest_parser.add_argument(
+        "--n-jobs",
+        action="store",
+        help="Number of processes to use.",
+        type=int,
+    )
     # ------------------------- Processing Args ------------------------
     args = vars(common_phrase_api_parser.parse_args(args))
 

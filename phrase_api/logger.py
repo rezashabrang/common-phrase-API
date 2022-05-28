@@ -5,7 +5,7 @@ import logging
 def get_logger(name):
     """Getting logger."""
     # Configuring Logger
-    logging.root.setLevel(logging.NOTSET)
+    logging.root.setLevel(logging.DEBUG)
     logger = logging.getLogger(name)
 
     # Create handler

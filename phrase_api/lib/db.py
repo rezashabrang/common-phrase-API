@@ -8,8 +8,11 @@ import pandas as pd
 from arango import ArangoClient
 from fastapi.exceptions import HTTPException
 from pandas import DataFrame
+from bson.objectid import ObjectId
 
 from phrase_api.logger import get_logger
+from arango.exceptions import AQLQueryExecuteError
+
 
 logger = get_logger(__name__)
 
@@ -54,44 +57,60 @@ def edge_generator(dataframe: DataFrame) -> DataFrame:
         yield edge_df
 
 
-def integrate_phrase_data(result: DataFrame, data_type: str = "vertex") -> None:
+def integrate_phrase_data(result: DataFrame) -> None:
     """Inserting or updating phrase data in arango collection.
 
     Args:
         result: JSON result of counted phrases or generated edges.
-        data_type: Either vertex or edge.
     """
     # ------------------ Initialization & Connecting to database ------------------
     vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
-    edge_col_name = os.getenv("ARANGO_EDGE_COLLECTION")
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
     client = arango_connection()
     phrase_db = client.db(database, username=username, password=password)
 
-    if data_type == "vertex":
-        collection = phrase_db.collection(vertex_col_name)
-
-    elif data_type == "edge":
-        collection = phrase_db.collection(edge_col_name)
-
     # Converting results to JSON records
     result = result.to_dict(orient="records")
 
-    bulk_insert = []  # initializing bulk insert list
-
-    # If record exists then update it otherwise append to bulk insert list
+    # UPSERT every item in result set.
     for item in result:
-        find_query = {"_key": item["_key"]}
-        find_res = list(collection.find(find_query))
-        if find_res:
-            old_count = find_res[0]["count"]
-            collection.update_match(find_query, {"count": old_count + item["count"]})
-        else:
-            bulk_insert.append(item)
+        try_counter = 1
+        while True:
+            try:
+                upsert_query = """
+                UPSERT {"_key": @phrase_hash}
+                    INSERT {"_key": @phrase_hash, "bag": @bag,"count": @count,
+                    "status": @status, "length": @length, "object_id": @obj_id}
+                    UPDATE {"count": OLD.count + @count}
+                IN @@agg_collection
+                """
+                binds = {
+                    "@agg_collection": vertex_col_name,
+                    "phrase_hash": item["_key"],
+                    "bag": item["bag"],
+                    "count": item["count"],
+                    "status": item["status"],
+                    "length": item["length"],
+                    "obj_id": str(ObjectId())
+                }
+                phrase_db.aql.execute(
+                    query=upsert_query,
+                    cache=False,
+                    bind_vars=binds
+                )
+                break
+            except AQLQueryExecuteError:
+                logger.warning(
+                    "AQL exception for phrase %s. Retrying (%d).",
+                    item["_key"],
+                    try_counter
+                )
 
-    collection.import_bulk(bulk_insert)
+                try_counter += 1
+                if try_counter >= 10:
+                    break
 
     client.close()
 

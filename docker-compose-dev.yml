@@ -24,11 +24,12 @@ services:
             AGG_PHRASE_PASS: ${AGG_PHRASE_PASS}
             API_KEY: ${API_KEY}
             NER_COLLECTION: ${NER_COLLECTION}
+            STOP_COLLECTION: ${STOP_COLLECTION}
             MYSQL_USER: ${MYSQL_USER}
-            MYSQL_PASS: ${MYSQL_PASS}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
             MYSQL_HOST: ${MYSQL_HOST}
             MYSQL_PORT: ${MYSQL_PORT}
-            MYSQL_DB: ${MYSQL_DB}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
             WEB_CONCURRENCY: ${WEB_CONCURRENCY}
         volumes:
             - .:/app/
@@ -52,11 +53,36 @@ services:
             ARANGO_PASS: ${ARANGO_PASS}
             ARANGO_HOST: ${ARANGO_HOST}
             ARANGO_PORT: ${ARANGO_PORT}
+            ARANGODB_OVERRIDE_DETECTED_TOTAL_MEMORY: ${ARANGODB_OVERRIDE_DETECTED_TOTAL_MEMORY}
         ports:
-            - 8001:8529
+            - 8081:8529
         volumes:
-            - ./data/arango:/var/lib/arangodb3
+            - phrase-vol:/var/lib/arangodb3
+            - ./arango.conf:/etc/arangodb3/arangod.conf
 
+    news-db:
+        image: mysql
+        container_name: news-db
+        restart: always
+        networks:
+            - phrase-net
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        ports:
+            - 8082:3306
+        volumes:
+            - news-vol:/var/lib/mysql
+
+    adminer:
+        image: adminer:latest
+        container_name: phrase-adminer
+        networks:
+            - phrase-net
+        ports:
+            - 8080:8080
     # prometheus:
     #     image: prom/prometheus
     #     container_name: prometheus
@@ -71,3 +97,20 @@ services:
 networks:
     phrase-net:
         name: phrase-net
+
+volumes:
+    phrase-vol:
+        name: phrase-vol
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/data/docker-volumes/phrase-vol/'
+
+    news-vol:
+        name: news-vol
+        driver: local
+        driver_opts:
+            type: 'none'
+            o: 'bind'
+            device: '/data/docker-volumes/news-vol/'
