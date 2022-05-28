@@ -8,7 +8,8 @@ ENV LANG=C.UTF-8 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/phrase_api \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TZ=Asia/Tehran
 
 # install dependencies
 RUN apt update && apt upgrade -y && apt install curl -y && apt install build-essential python3-dev libicu-dev pkg-config libmariadb-dev -y
@@ -27,4 +28,4 @@ COPY . /app
 
 # Final
 WORKDIR /app
-CMD ["uvicorn", "phrase_api.main:app", "--host", "0.0.0.0", "--port", "80","--reload"]
+CMD ["uvicorn", "phrase_api.main:app", "--host", "0.0.0.0", "--port", "80"]

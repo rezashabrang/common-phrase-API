@@ -4,7 +4,7 @@ import argparse
 
 import sys
 
-from phrase_api.lib.cli_helper import ingest_site, initialize_sqlite
+from phrase_api.lib.cli_helper import ingest_site
 from phrase_api.scripts.progress_viewer import view_progress
 from phrase_api.scripts.NER_extractor import ner_handler
 from phrase_api.scripts.chunk_aggregate import aggregation_handler
@@ -20,9 +20,6 @@ def cli_wrapper(args):
     # CLI Confs
     common_phrase_api_parser = argparse.ArgumentParser()
     subparsers = common_phrase_api_parser.add_subparsers(dest="command")
-
-    # ----------------------- SQLITE Handler -----------------------
-    sqlite_handler = subparsers.add_parser("ini-sqlite", help="Create sqlite db")
 
     # ------------------------- Progress Viewer -------------------------
     prog_handler = subparsers.add_parser(
@@ -171,9 +168,7 @@ def run_commands(args: dict):
     Args:
         args: Parsed CLI arguments.
     """
-    if args["command"] == "ini-sqlite":
-        initialize_sqlite()
-    elif args["command"] == "ingest":
+    if args["command"] == "ingest":
         ingest_site(args)
     elif args["command"] == "view-progress":
         view_progress()

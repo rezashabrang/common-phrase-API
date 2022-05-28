@@ -104,7 +104,7 @@ async def process_document(
 
         e_status = time()
 
-        logger.info(
+        logger.debug(
             "Time taken for status detection: %.1f ms", (e_status - s_status) * 1000
         )
 
@@ -113,8 +113,7 @@ async def process_document(
 
         s_integrate = time()
 
-        upsert_time, convert_time, connection_time = integrate_phrase_data(
-            phrase_count_res)
+        integrate_phrase_data(phrase_count_res)
 
         e_integrate = time()
 

@@ -1,7 +1,6 @@
 """Helper functions for CLI."""
 import multiprocessing as mp
 import os
-import sqlite3
 
 import requests
 from sqlalchemy import BLOB, Column, Integer, Text, create_engine, select, update, and_
