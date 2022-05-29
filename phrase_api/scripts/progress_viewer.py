@@ -10,7 +10,7 @@ def view_progress():
     password = os.getenv("MYSQL_PASS")
     host = os.getenv("MYSQL_HOST")
     port = os.getenv("MYSQL_PORT")
-    db = os.getenv("MYSQL_USER")
+    db = os.getenv("MYSQL_DATABASE")
 
     db_engine = create_engine(
         "mysql://{username}:{password}@{host}:{port}/{db}?charset={ch}".format(
