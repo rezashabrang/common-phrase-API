@@ -1,6 +1,7 @@
 """Helper functions for CLI."""
 import multiprocessing as mp
 import os
+from pydoc import cli
 
 import requests
 from sqlalchemy import BLOB, Column, Integer, Text, create_engine, select, update, and_
@@ -40,9 +41,13 @@ def ingest_site(cli_args):
     conn = db_engine.connect()
 
     logger.info("Connected to database.")
+    if not cli_args["max_id"]:
+        max_id_query = "SELECT MAX(newsstudio_id) FROM newsstudio_contents"
+        max_id = (conn.execute(max_id_query).fetchone())[0]
+    else:
+        max_id = cli_args["max_id"]
 
-    max_id_query = "SELECT MAX(newsstudio_id) FROM newsstudio_contents"
-    max_id = (conn.execute(max_id_query).fetchone())[0]
+    min_id = 0 if not cli_args["min_id"] else cli_args["min_id"]
 
     conn.close()
     db_engine.dispose()
@@ -53,9 +58,12 @@ def ingest_site(cli_args):
         mp.cpu_count() - 2, 1)
 
     # Subgrouping news
-    i = list(range(0, max_id + 101, 100))
+    i = list(range(min_id, max_id + 101, 100))
     j = [i - 1 for i in i]
     news_groups = list(zip(i, j[1:]))
+
+    # Ngram Range
+    ngram_range = cli_args["ngram_range"]
 
     pool = mp.Pool(num_threads)
     pool.starmap(
@@ -63,12 +71,12 @@ def ingest_site(cli_args):
         zip(
             (news_ids for news_ids in news_groups),
             (cli_args for _ in range(len(news_groups))),
-            (max_id for _ in range(len(news_groups))),
+            (ngram_range for _ in range(len(news_groups))),
         ),
     )
 
 
-def ingest_news(news_ids, cli_args, max_id):
+def ingest_news(news_ids, cli_args, ngram_range):
     """Ingesting each news"""
     try:
         # database engine
@@ -109,7 +117,7 @@ def ingest_news(news_ids, cli_args, max_id):
             headers = {"x-token": os.getenv("API_KEY")}
             request_url = f"http://127.0.0.1:80/api/doc-process/?doc_type=TEXT&\
 replace_stop={cli_args['replace_stop']}&tag_stop={cli_args['tag_stop']}\
-&tag_highlight={cli_args['tag_highlight']}\
+&tag_highlight={cli_args['tag_highlight']}&ngram_range={ngram_range}\
 &doc_id={news_id}&sitename={cli_args['sitename']}"
 
             req = requests.post(request_url, json=payload, headers=headers)

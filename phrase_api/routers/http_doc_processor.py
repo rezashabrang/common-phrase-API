@@ -13,6 +13,7 @@ from phrase_api.logger import get_logger
 from lib.status_updater import (
     status_detector, get_named_entities, get_stop_words_regex
 )
+from phrase_api.lib.frequent_remover import freq_regex
 
 
 # ------------------------------ Initialization -------------------------------
@@ -21,6 +22,9 @@ logger = get_logger(__name__)
 
 NE_LIST = get_named_entities()
 STOP_PATTERN = get_stop_words_regex()
+
+# Frequents
+FREQ_NE, FREQ_STOPS = freq_regex("ne"), freq_regex("stop")
 
 
 # ---------------------------- function definition ----------------------------
@@ -41,6 +45,7 @@ class PhraseDocument(BaseModel):
 async def process_document(
     doc: PhraseDocument,
     doc_type: str = Query("TEXT", enum=["TEXT", "HTML", "URL"]),
+    ngram_range: str = "1,5",
     replace_stop: bool = False,
     tag_stop: bool = False,
     tag_highlight: bool = False,
@@ -58,6 +63,7 @@ async def process_document(
     * **tag_stop**: Whether to set status for stop phrases as `suggested-stop`.
     Note that if **replace_stop** is set to *True* setting this argument to *True*
     is meaningless.
+    * **ngram_range**: range on ngram. e.g 1,6
 
     * **sitename**: Name of the site while using AASAAM services.
 
@@ -78,11 +84,13 @@ async def process_document(
 
         s_ingest = time()
 
+        ngram_range = list(map(int, ngram_range.split(",")))
         phrase_count_res = ingest_doc(
             doc=doc.document,
             doc_type=doc_type,
-            replace_stop=replace_stop,
-            tag_stop=tag_stop,
+            remove_stop_regex=FREQ_STOPS,
+            remove_highlight_regex=FREQ_NE,
+            ngram_range=ngram_range
         )
 
         e_ingest = time()
@@ -90,7 +98,6 @@ async def process_document(
         logger.debug(
             "Time taken for ingesting document: %.1f ms", (e_ingest - s_ingest) * 1000
         )
-
         # ----------------------------- Status Detector -----------------------------
         logger.info("Detecting Statuses")
 

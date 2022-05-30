@@ -141,14 +141,29 @@ def cli_wrapper(args):
         help="Whether to replace stop words. Default is False.",
     )
 
-    # ID
+    # Min ID
     ingest_parser.add_argument(
-        "-i",
-        "--id",
+        "--min_id",
         action="store",
         help="Optional arg for starting article id.",
         type=int,
     )
+
+    # Max ID
+    ingest_parser.add_argument(
+        "--max_id",
+        action="store",
+        help="Optional arg for maximum article id.",
+        type=int,
+    )
+    # Ngram range
+    ingest_parser.add_argument(
+        "--ngram_range",
+        action="store",
+        help="Range for ngrams",
+        type=str,
+    )
+
     # n-jobs
     ingest_parser.add_argument(
         "--n-jobs",
