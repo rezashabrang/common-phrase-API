@@ -56,10 +56,10 @@ def chunk_aggregate(
         doc_id: ID of the document
 
     """
-    phrase_collection = os.getenv("ARANGO_VERTEX_COLLECTION")
-    username = os.getenv("AGG_PHRASE_USER")
-    password = os.getenv("AGG_PHRASE_PASS")
-    database = os.getenv("AGG_PHARSE_DB")
+    phrase_collection = os.getenv("PHRASE_COLLECTION")
+    username = os.getenv("ARANGO_USER")
+    password = os.getenv("ARANGO_PASS")
+    database = os.getenv("ARANGO_DATABASE")
     try:
         client = arango_connection()
         phrase_db = client.db(database, username=username, password=password)
@@ -127,7 +127,7 @@ def aggregate_record(record: dict, phrase_client):
     phrase_status = record["status"]
     phrase_length = record["length"]
     agg_collection = os.getenv("AGG_PHRASE_COL")
-    phrase_collection = os.getenv("ARANGO_VERTEX_COLLECTION")
+    phrase_collection = os.getenv("PHRASE_COLLECTION")
 
     upsert_query = """
     UPSERT {"_key": @phrase_hash}
@@ -163,4 +163,3 @@ def aggregate_record(record: dict, phrase_client):
             )
             try_counter += 1
             sleep(0.1)
-

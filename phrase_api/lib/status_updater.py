@@ -7,9 +7,9 @@ import re
 def get_named_entities():
     """Fetching named entities from database."""
     # ------------------ Arango Connection Config ------------------
-    username = os.getenv("AGG_PHRASE_USER")
-    password = os.getenv("AGG_PHRASE_PASS")
-    database = os.getenv("AGG_PHARSE_DB")
+    username = os.getenv("ARANGO_USER")
+    password = os.getenv("ARANGO_PASS")
+    database = os.getenv("ARANGO_DATABASE")
     arango_client = arango_connection()
     phrase_db = arango_client.db(database, username=username, password=password)
 
@@ -27,9 +27,9 @@ def get_named_entities():
 def get_stop_words_regex():
     """Fetching stop words from database."""
     # ------------------ Arango Connection Config ------------------
-    username = os.getenv("AGG_PHRASE_USER")
-    password = os.getenv("AGG_PHRASE_PASS")
-    database = os.getenv("AGG_PHARSE_DB")
+    username = os.getenv("ARANGO_USER")
+    password = os.getenv("ARANGO_PASS")
+    database = os.getenv("ARANGO_DATABASE")
     arango_client = arango_connection()
     phrase_db = arango_client.db(database, username=username, password=password)
 

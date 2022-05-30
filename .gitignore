@@ -103,6 +103,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.prod
 .venv
 env/
 venv/
@@ -135,6 +136,7 @@ dmypy.json
 
 # Exclusion for structuring API
 !/phrase_api/lib
+
 sample_news.xlsx
 tracker.db
 test_data/

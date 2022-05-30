@@ -27,7 +27,7 @@ def initializing_db():
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
-    node_collection = os.getenv("ARANGO_VERTEX_COLLECTION")
+    node_collection = os.getenv("PHRASE_COLLECTION")
     edge_collection = os.getenv("ARANGO_EDGE_COLLECTION")
     test_client = arango_connection()
     sys_db = test_client.db("_system", username=username, password=password)
@@ -71,7 +71,7 @@ def clean_collection():
         password=os.getenv("ARANGO_PASS"),
     )
 
-    test_node_collection = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    test_node_collection = test_db.collection(os.getenv("PHRASE_COLLECTION"))
     test_edge_collection = test_db.collection(os.getenv("ARANGO_EDGE_COLLECTION"))
 
     test_node_collection.truncate()

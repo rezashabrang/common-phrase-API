@@ -12,7 +12,7 @@ services:
         environment:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}
-            ARANGO_VERTEX_COLLECTION: ${ARANGO_VERTEX_COLLECTION}
+            PHRASE_COLLECTION: ${PHRASE_COLLECTION}
             ARANGO_EDGE_COLLECTION: ${ARANGO_EDGE_COLLECTION}
             ARANGO_USER: ${ARANGO_USER}
             ARANGO_PASS: ${ARANGO_PASS}
@@ -20,8 +20,6 @@ services:
             ARANGO_PORT: ${ARANGO_PORT}
             AGG_PHARSE_DB: ${AGG_PHARSE_DB}
             AGG_PHRASE_COL: ${AGG_PHRASE_COL}
-            AGG_PHRASE_USER: ${AGG_PHRASE_USER}
-            AGG_PHRASE_PASS: ${AGG_PHRASE_PASS}
             API_KEY: ${API_KEY}
             NER_COLLECTION: ${NER_COLLECTION}
             STOP_COLLECTION: ${STOP_COLLECTION}
@@ -40,7 +38,6 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
 
-
     phrase-db:
         image: arangodb
         container_name: phrase-db
@@ -50,7 +47,7 @@ services:
         environment:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}
-            ARANGO_VERTEX_COLLECTION: ${ARANGO_VERTEX_COLLECTION}
+            PHRASE_COLLECTION: ${PHRASE_COLLECTION}
             ARANGO_EDGE_COLLECTION: ${ARANGO_EDGE_COLLECTION}
             ARANGO_USER: ${ARANGO_USER}
             ARANGO_PASS: ${ARANGO_PASS}
@@ -62,7 +59,6 @@ services:
         volumes:
             - phrase-vol:/var/lib/arangodb3
             - ./arango-prod.conf:/etc/arangodb3/arangod.conf
-
 
 networks:
     phrase-net:

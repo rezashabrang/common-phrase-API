@@ -36,7 +36,7 @@ def test_insert_true(clean_collection: Callable[[], None]) -> None:
         username=os.getenv("ARANGO_USER"),
         password=os.getenv("ARANGO_PASS"),
     )
-    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    test_col = test_db.collection(os.getenv("PHRASE_COLLECTION"))
     arango_rows = test_col.find({"_key": "15fds67dsa94d6"})
 
     assert list(arango_rows)
@@ -61,7 +61,7 @@ def test_update_true(clean_collection: Callable[[], None]) -> None:
         username=os.getenv("ARANGO_USER"),
         password=os.getenv("ARANGO_PASS"),
     )
-    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    test_col = test_db.collection(os.getenv("PHRASE_COLLECTION"))
     arango_rows = test_col.find({"_key": "15fds67dsa94d6"})
     assert list(arango_rows)[0]["count"] == 10
 
@@ -85,7 +85,7 @@ def test_update_status_true(clean_collection: Callable[[], None]) -> None:
         username=os.getenv("ARANGO_USER"),
         password=os.getenv("ARANGO_PASS"),
     )
-    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    test_col = test_db.collection(os.getenv("PHRASE_COLLECTION"))
     arango_rows = test_col.find({"_key": sample_res[0]["_key"]})
     status = list(arango_rows)[0]["status"]
     assert status == "highlight"
@@ -169,6 +169,6 @@ def test_simple_insert_arango(clean_collection, processed_text):
         username=os.getenv("ARANGO_USER"),
         password=os.getenv("ARANGO_PASS"),
     )
-    test_col = test_db.collection(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    test_col = test_db.collection(os.getenv("PHRASE_COLLECTION"))
     arango_rows = test_col.find({}, limit=1)
     assert list(arango_rows)

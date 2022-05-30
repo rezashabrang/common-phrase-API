@@ -49,9 +49,9 @@ def tag_suggested_highlight(
 ):
     """Tagging records that are Named Entity."""
     agg_collection = os.getenv("AGG_PHRASE_COL")
-    username = os.getenv("AGG_PHRASE_USER")
-    password = os.getenv("AGG_PHRASE_PASS")
-    database = os.getenv("AGG_PHARSE_DB")
+    username = os.getenv("ARANGO_USER")
+    password = os.getenv("ARANGO_PASS")
+    database = os.getenv("ARANGO_DATABASE")
     try:
         client = arango_connection()
         phrase_db = client.db(database, username=username, password=password)

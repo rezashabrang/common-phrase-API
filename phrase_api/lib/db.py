@@ -35,7 +35,7 @@ def edge_generator(dataframe: DataFrame) -> DataFrame:
     Yields:
         Edge dataframe
     """
-    vertex_col_name = str(os.getenv("ARANGO_VERTEX_COLLECTION"))
+    vertex_col_name = str(os.getenv("PHRASE_COLLECTION"))
     for i in range(len(dataframe) - 1):
         comb = []  # Combinations list
         static_node = dataframe.iloc[i]["_key"]
@@ -64,7 +64,7 @@ def integrate_phrase_data(result: DataFrame) -> None:
         result: JSON result of counted phrases or generated edges.
     """
     # ------------------ Initialization & Connecting to database ------------------
-    vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
+    vertex_col_name = os.getenv("PHRASE_COLLECTION")
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
@@ -120,7 +120,7 @@ def insert_phrase_data(
 ) -> None:
     """Inserting data into arango. (No integration)"""
     # ------------------ Initialization & Connecting to database ------------------
-    vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
+    vertex_col_name = os.getenv("PHRASE_COLLECTION")
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
@@ -148,7 +148,7 @@ def update_status(phrase: str, status: str) -> None:
         HTTPException: If no phrase is found in database.
     """
     # ------------------ Connecting to collection ------------------
-    vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
+    vertex_col_name = os.getenv("PHRASE_COLLECTION")
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
@@ -174,7 +174,7 @@ def fetch_data(
 ) -> List[Dict[str, str]]:
     """Fetching data from arango."""
     # ----------------- Client Initialization ----------------
-    vertex_col_name = os.getenv("ARANGO_VERTEX_COLLECTION")
+    vertex_col_name = os.getenv("PHRASE_COLLECTION")
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
