@@ -13,13 +13,10 @@ services:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}
             PHRASE_COLLECTION: ${PHRASE_COLLECTION}
-            ARANGO_EDGE_COLLECTION: ${ARANGO_EDGE_COLLECTION}
             ARANGO_USER: ${ARANGO_USER}
             ARANGO_PASS: ${ARANGO_PASS}
             ARANGO_HOST: ${ARANGO_HOST}
             ARANGO_PORT: ${ARANGO_PORT}
-            AGG_PHARSE_DB: ${AGG_PHARSE_DB}
-            AGG_PHRASE_COL: ${AGG_PHRASE_COL}
             API_KEY: ${API_KEY}
             NER_COLLECTION: ${NER_COLLECTION}
             STOP_COLLECTION: ${STOP_COLLECTION}
@@ -29,14 +26,14 @@ services:
             MYSQL_PORT: ${MYSQL_PORT}
             MYSQL_DATABASE: ${MYSQL_DATABASE}
             WEB_CONCURRENCY: ${WEB_CONCURRENCY}
+            REPEATED_NE_COLLECTION: ${REPEATED_NE_COLLECTION}
+            REPEATED_STOPS_COLLECTION: ${REPEATED_STOPS_COLLECTION}
         volumes:
             - .:/app/
             - /app/.venv
         ports:
             - "8000:80"
             - "8005:8005"
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
 
     phrase-db:
         image: arangodb
@@ -48,7 +45,6 @@ services:
             ARANGO_ROOT_PASSWORD: ${ARANGO_ROOT_PASSWORD}
             ARANGO_DATABASE: ${ARANGO_DATABASE}
             PHRASE_COLLECTION: ${PHRASE_COLLECTION}
-            ARANGO_EDGE_COLLECTION: ${ARANGO_EDGE_COLLECTION}
             ARANGO_USER: ${ARANGO_USER}
             ARANGO_PASS: ${ARANGO_PASS}
             ARANGO_HOST: ${ARANGO_HOST}

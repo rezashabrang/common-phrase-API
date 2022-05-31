@@ -14,14 +14,13 @@ ENV LANG=C.UTF-8 \
 # install dependencies
 RUN apt update && apt upgrade -y && apt install curl -y && apt install build-essential python3-dev libicu-dev pkg-config libmariadb-dev -y
 
-COPY pyproject.toml /app
-
 # POETRY
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python && \
     cd /usr/local/bin && \
     ln -s /opt/poetry/bin/poetry && \
     poetry config virtualenvs.create false
 # RUN poetry lock -n && poetry export --without-hashes > requirements.txt
+COPY pyproject.toml /app
 COPY poetry.lock /app
 RUN poetry install -n --no-dev
 
@@ -29,4 +28,4 @@ COPY . /app
 
 # Final
 WORKDIR /app
-CMD ["uvicorn", "phrase_api.main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
+CMD uvicorn phrase_api.main:app --host 0.0.0.0 --port 80 --reload --log-level ${LOG_LEVEL}

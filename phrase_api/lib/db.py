@@ -10,11 +10,11 @@ from fastapi.exceptions import HTTPException
 from pandas import DataFrame
 from bson.objectid import ObjectId
 
-from phrase_api.logger import get_logger
+from phrase_api.logger import LoggerSetup
 from arango.exceptions import AQLQueryExecuteError
 
 
-logger = get_logger(__name__)
+logger = LoggerSetup(__name__, "info").get_minimal()
 
 
 def arango_connection() -> ArangoClient:
@@ -105,8 +105,7 @@ def integrate_phrase_data(result: DataFrame) -> None:
                 logger.warning(
                     "AQL exception for phrase %s. Retrying (%d).",
                     item["_key"],
-                    try_counter
-                )
+                    try_counter)
 
                 try_counter += 1
                 if try_counter >= 10:

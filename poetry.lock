@@ -1162,7 +1162,7 @@ ptyprocess = ">=0.5"
 
 [[package]]
 name = "phrase-counter"
-version = "0.1.8"
+version = "0.2.0"
 description = "Counting stop words."
 category = "main"
 optional = false
@@ -2135,7 +2135,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "8dc28df3b5cca3e222cd86c20d05af17a2935f015bc613b91aa84d968ab7ddc1"
+content-hash = "be674e0ff6f1bf652fe9d5f8fdf198ef7890ae61873865b0807b7643a931e490"
 
 [metadata.files]
 anybadge = [
@@ -2924,8 +2924,8 @@ pexpect = [
     {file = "pexpect-4.8.0.tar.gz", hash = "sha256:fc65a43959d153d0114afe13997d439c22823a27cefceb5ff35c2178c6784c0c"},
 ]
 phrase-counter = [
-    {file = "phrase_counter-0.1.8-py3-none-any.whl", hash = "sha256:53e46093af7096b0d608401c817e1abd4cf0fffea69cffa4e012829caf6ac244"},
-    {file = "phrase_counter-0.1.8.tar.gz", hash = "sha256:952c1eafe5c8b16dac8a25d30ac582e2bf418d90b79cf00816d029d568968faa"},
+    {file = "phrase_counter-0.2.0-py3-none-any.whl", hash = "sha256:02f07621b58117d5913b278df3d4785645844b722b0bae61ca26922c388d9a75"},
+    {file = "phrase_counter-0.2.0.tar.gz", hash = "sha256:724ca0a5a07eeb063fa1060168305cd0d03192527d1ab0dcb6eca787a692a44a"},
 ]
 pickleshare = [
     {file = "pickleshare-0.7.5-py2.py3-none-any.whl", hash = "sha256:9649af414d74d4df115d5d718f82acb59c9d418196b7b4290ed47a12ce62df56"},

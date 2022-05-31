@@ -16,11 +16,9 @@ def get_named_entities():
     # Fetching named entities
     named_entities = phrase_db.aql.execute("""FOR ph in ner return {"word":ph.word}""")
     named_entities = list(named_entities)
+    arango_client.close()
     ne = [word["word"] for word in named_entities]
 
-    # Creating regex pattern
-    # pattern = "|".join(ne)
-    # high_match = re.compile(r"\b(" + pattern + r")\b")
     return ne
 
 
@@ -37,6 +35,7 @@ def get_stop_words_regex():
     stop_words = phrase_db.aql.execute(
         """FOR ph in stop_word return {"word":ph.word}""")
     stop_words = list(stop_words)
+    arango_client.close()
     stops = [word["word"] for word in stop_words]
 
     # Creating regex pattern

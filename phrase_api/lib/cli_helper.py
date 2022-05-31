@@ -1,18 +1,17 @@
 """Helper functions for CLI."""
 import multiprocessing as mp
 import os
-from pydoc import cli
 
 import requests
 from sqlalchemy import BLOB, Column, Integer, Text, create_engine, select, update, and_
 from sqlalchemy.exc import OperationalError, TimeoutError
 from sqlalchemy.orm import declarative_base
 
-from phrase_api.logger import get_logger
+from phrase_api.logger import LoggerSetup
 
 Base = declarative_base()
 
-logger = get_logger(__name__)
+logger = LoggerSetup(__name__, "info").get_minimal()
 
 
 class News(Base):
@@ -54,11 +53,11 @@ def ingest_site(cli_args):
 
     logger.info("Starting fetching news.")
 
-    num_threads = cli_args["n-jobs"] if "n-jobs" in cli_args else max(
+    num_threads = cli_args["n_jobs"] if "n_jobs" in cli_args else max(
         mp.cpu_count() - 2, 1)
 
     # Subgrouping news
-    i = list(range(min_id, max_id + 101, 100))
+    i = list(range(min_id, max_id + 1, 100))
     j = [i - 1 for i in i]
     news_groups = list(zip(i, j[1:]))
 

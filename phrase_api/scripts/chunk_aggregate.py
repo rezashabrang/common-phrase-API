@@ -2,11 +2,11 @@ import os
 
 from phrase_api.lib.db import arango_connection
 import multiprocessing as mp
-from phrase_api.logger import get_logger
+from phrase_api.logger import LoggerSetup
 from arango.exceptions import AQLQueryExecuteError
 from time import sleep
 
-LOGGER = get_logger("Chunk-AGG")
+LOGGER = LoggerSetup("Chunk-AGG", "info").get_minimal()
 
 
 def aggregation_handler(

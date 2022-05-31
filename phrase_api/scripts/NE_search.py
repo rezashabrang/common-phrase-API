@@ -4,16 +4,16 @@ import multiprocessing as mp
 from phrase_api.lib.db import arango_connection
 from hashlib import sha256
 import os
-from phrase_api.logger import get_logger
+from phrase_api.logger import LoggerSetup
 
 
-LOGGER = get_logger("NER-Finder")
+LOGGER = LoggerSetup("NER-Finder", "info").get_minimal()
 
 
 def tag_handler(
     max_records: int,
     chunk_size: int = 1000,
-    n_jobs: int = mp.cpu_count()-2
+    n_jobs: int = mp.cpu_count() - 2
 ):
     """Main handler for tagging suggested-highlight status
 

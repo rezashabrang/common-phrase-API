@@ -8,7 +8,7 @@ from lib.db import integrate_phrase_data
 from phrase_counter.ingest import ingest_doc
 from pydantic import BaseModel
 
-from phrase_api.logger import get_logger
+from phrase_api.logger import LoggerSetup
 
 from lib.status_updater import (
     status_detector, get_named_entities, get_stop_words_regex
@@ -18,7 +18,7 @@ from phrase_api.lib.frequent_remover import freq_regex
 
 # ------------------------------ Initialization -------------------------------
 router = APIRouter()
-logger = get_logger(__name__)
+logger = LoggerSetup(__name__, "debug").get_minimal()
 
 NE_LIST = get_named_entities()
 STOP_PATTERN = get_stop_words_regex()

@@ -5,11 +5,11 @@ from cleaning_utils import replace_arabic_char
 import pandas as pd
 from hashlib import sha256
 import multiprocessing as mp
-from phrase_api.logger import get_logger
+from phrase_api.logger import LoggerSetup
 from phrase_api.lib.db import arango_connection
 from arango.exceptions import AQLQueryExecuteError
 
-LOGGER = get_logger("NER-Extractor")
+LOGGER = LoggerSetup("NER-Extractor", "info").get_minimal()
 
 
 def fetch_ner_file(file_name):
@@ -94,7 +94,7 @@ def process_ner(file_path: str):
     LOGGER.info("Finished processing NER file: %s", file_path)
 
 
-def ner_handler(data_path: str, n_jobs=mp.cpu_count()-4):
+def ner_handler(data_path: str, n_jobs=mp.cpu_count() - 4):
     """Prcoessing NER files for given path
 
     Args:
