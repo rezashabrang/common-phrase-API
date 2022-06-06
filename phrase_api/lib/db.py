@@ -4,7 +4,6 @@ from typing import Dict, List, Union
 import os
 from hashlib import sha256
 
-import pandas as pd
 from arango import ArangoClient
 from fastapi.exceptions import HTTPException
 from pandas import DataFrame
@@ -24,37 +23,6 @@ def arango_connection() -> ArangoClient:
     arango_client = ArangoClient(hosts=f"http://{host}:{port}")
 
     return arango_client
-
-
-def edge_generator(dataframe: DataFrame) -> DataFrame:
-    """Generator function for creating edges.
-
-    Args:
-        dataframe: Ngrams dataframe
-
-    Yields:
-        Edge dataframe
-    """
-    vertex_col_name = str(os.getenv("PHRASE_COLLECTION"))
-    for i in range(len(dataframe) - 1):
-        comb = []  # Combinations list
-        static_node = dataframe.iloc[i]["_key"]
-
-        for j in range(i + 1, len(dataframe)):
-            dynamic_node = dataframe.iloc[j]["_key"]
-            comb.append((static_node, dynamic_node))
-
-        # ---------------- Creating dataframe based on relations ----------------
-        edge_df = pd.DataFrame(comb, columns=["_from", "_to"])
-        # Creating edge collection key
-        edge_df["_key"] = edge_df.apply(
-            lambda row: row["_from"] + "_" + row["_to"], axis=1
-        )
-        edge_df["_from"] = vertex_col_name + "/" + edge_df["_from"].astype(str)
-        edge_df["_to"] = vertex_col_name + "/" + edge_df["_to"].astype(str)
-        edge_df["count"] = 1
-
-        yield edge_df
 
 
 def integrate_phrase_data(result: DataFrame) -> None:
@@ -114,24 +82,116 @@ def integrate_phrase_data(result: DataFrame) -> None:
     client.close()
 
 
-def insert_phrase_data(
-    result: DataFrame,
-) -> None:
-    """Inserting data into arango. (No integration)"""
+def integrate_word_data(result: DataFrame) -> None:
+    """Inserting or updating words data in arango word collection.
+
+    Args:
+        result: Dataframe of counted words.
+    """
     # ------------------ Initialization & Connecting to database ------------------
-    vertex_col_name = os.getenv("PHRASE_COLLECTION")
+    vertex_col_name = os.getenv("WORD_COLLECTION")
     username = os.getenv("ARANGO_USER")
     password = os.getenv("ARANGO_PASS")
     database = os.getenv("ARANGO_DATABASE")
     client = arango_connection()
     phrase_db = client.db(database, username=username, password=password)
 
-    collection = phrase_db.collection(vertex_col_name)
+    # Converting results to JSON records
+    result = result.to_dict(orient="records")
+
+    # UPSERT every item in result set.
+    for item in result:
+        try_counter = 1
+        while True:
+            try:
+                upsert_query = """
+                UPSERT {"_key": @word_hash}
+                    INSERT {"_key": @word_hash, "word": @word,"count": @count,
+                    "status": @status, "object_id": @obj_id}
+                    UPDATE {"count": OLD.count + @count}
+                IN @@word_collection
+                """
+                binds = {
+                    "@word_collection": vertex_col_name,
+                    "word_hash": item["word_hash"],
+                    "word": item["word"],
+                    "count": item["count"],
+                    "status": item["status"],
+                    "obj_id": str(ObjectId())
+                }
+                phrase_db.aql.execute(
+                    query=upsert_query,
+                    cache=False,
+                    bind_vars=binds
+                )
+                break
+            except AQLQueryExecuteError as err:
+                logger.warning(
+                    "AQL exception for word %s. Retrying (%d).",
+                    item["word_hash"],
+                    try_counter,
+                )
+
+                try_counter += 1
+                if try_counter >= 10:
+                    break
+
+    client.close()
+
+
+def integrate_word_edge_data(result: DataFrame) -> None:
+    """Inserting or updating words relation data in arango collection.
+
+    Args:
+        result: Dataframe of generated edges.
+    """
+    # ------------------ Initialization & Connecting to database ------------------
+    vertex_col_name = os.getenv("WORD_EDGE_COLLECTION")
+    username = os.getenv("ARANGO_USER")
+    password = os.getenv("ARANGO_PASS")
+    database = os.getenv("ARANGO_DATABASE")
+    client = arango_connection()
+    phrase_db = client.db(database, username=username, password=password)
 
     # Converting results to JSON records
     result = result.to_dict(orient="records")
 
-    collection.import_bulk(result)
+    # UPSERT every item in result set.
+    for item in result:
+        try_counter = 1
+        while True:
+            try:
+                upsert_query = """
+                UPSERT {"_key": @edge_key}
+                    INSERT {"_key": @edge_key, "_from": @_from, "_to": @_to,
+                    "count": @count, "object_id": @obj_id}
+                    UPDATE {"count": OLD.count + @count}
+                IN @@word_edge_col
+                """
+                binds = {
+                    "@word_edge_col": vertex_col_name,
+                    "edge_key": item["_key"],
+                    "_from": item["_from"],
+                    "_to": item["_to"],
+                    "count": item["count"],
+                    "obj_id": str(ObjectId())
+                }
+                phrase_db.aql.execute(
+                    query=upsert_query,
+                    cache=False,
+                    bind_vars=binds
+                )
+                break
+            except AQLQueryExecuteError as err:
+                logger.warning(
+                    "AQL exception for relation %s. Retrying (%d).",
+                    item["_key"],
+                    try_counter,
+                    exc_info=err)
+
+                try_counter += 1
+                if try_counter >= 2:
+                    break
 
     client.close()
 

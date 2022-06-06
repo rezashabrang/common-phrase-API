@@ -5,7 +5,9 @@ import os
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.openapi.utils import get_openapi
-from routers import http_data_fetcher, http_doc_processor, http_status_updater
+from routers import (
+    http_data_fetcher, http_doc_processor, http_status_updater, http_word_graph
+)
 
 app = FastAPI()
 DESCRIPTION = """
@@ -76,7 +78,14 @@ app.openapi = custom_openapi  # type: ignore
 app.include_router(
     http_doc_processor.router,
     prefix=os.getenv("ROOT_PATH", ""),
-    dependencies=[Depends(get_token_header)],
+    # dependencies=[Depends(get_token_header)],
+    responses={404: {"description": "Not found"}},
+)
+
+app.include_router(
+    http_word_graph.router,
+    prefix=os.getenv("ROOT_PATH", ""),
+    # dependencies=[Depends(get_token_header)],
     responses={404: {"description": "Not found"}},
 )
 
