@@ -7,7 +7,7 @@ def view_progress():
     """Viewing progress for news databse defined in env variables."""
     # credentials
     username = os.getenv("MYSQL_USER")
-    password = os.getenv("MYSQL_PASS")
+    password = os.getenv("MYSQL_PASSWORD")
     host = os.getenv("MYSQL_HOST")
     port = os.getenv("MYSQL_PORT")
     db = os.getenv("MYSQL_DATABASE")

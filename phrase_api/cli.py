@@ -9,6 +9,7 @@ from phrase_api.scripts.progress_viewer import view_progress
 from phrase_api.scripts.NER_extractor import ner_handler
 from phrase_api.scripts.chunk_aggregate import aggregation_handler
 from phrase_api.scripts.NE_search import tag_handler
+from phrase_api.scripts.word_graph_ingest import ingest_word_graph
 
 
 def cli_wrapper(args):
@@ -93,6 +94,13 @@ def cli_wrapper(args):
         "ingest", help="CLI wrapper for doc-process API"
     )
 
+    # Mode
+    ingest_parser.add_argument(
+        "--mode", action="store",
+        help="Word graph or ngram ingestion", required=False,
+        choices=["word-graph", "ngram"], default="ngram"
+    )
+
     # Host
     ingest_parser.add_argument(
         "--host", action="store", help="Host address of the databse", required=True
@@ -171,6 +179,7 @@ def cli_wrapper(args):
         help="Number of processes to use.",
         type=int,
     )
+
     # ------------------------- Processing Args ------------------------
     args = vars(common_phrase_api_parser.parse_args(args))
 
@@ -183,8 +192,10 @@ def run_commands(args: dict):
     Args:
         args: Parsed CLI arguments.
     """
-    if args["command"] == "ingest":
+    if args["command"] == "ingest" and args["mode"] == "ngram":
         ingest_site(args)
+    elif args["command"] == "ingest" and args["mode"] == "word-graph":
+        ingest_word_graph(args)
     elif args["command"] == "view-progress":
         view_progress()
     elif args["command"] == "process-NER":
